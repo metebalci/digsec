@@ -1,6 +1,5 @@
 import os
 from digsec.answer import save_rrset
-from digsec.help import display_help_download
 from digsec.utils import parse_flags, dprint
 from digsec.messages import L2_RR_DS
 from digsec.utils import dnssec_algorithm_to_str, dnssec_digest_type_to_str
