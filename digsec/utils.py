@@ -72,6 +72,7 @@ def decode_labels(p, offset):
             pointer = ((qnamepartlen & 0b00111111) << 8) | p[i]
             i = i + 1
             (pointedlabels, pointedoffset) = decode_labels(p, pointer)
+            dprint('decoded labels: %s' % pointedlabels)
             # pointed part can be full or partial
             qnameparts.extend(pointedlabels)
             # pointed part can be only the last, so
@@ -89,9 +90,10 @@ def decode_name(p, offset):
 
 def encode_name(name):
     b = bytearray()
-    for label in name.split("."):
-        b.append(len(label))
-        b.extend(label.encode('ascii'))
+    if len(name) > 0:
+        for label in name.split("."):
+            b.append(len(label))
+            b.extend(label.encode('ascii'))
     b.append(0)
     return b
 
@@ -161,6 +163,9 @@ def dnssec_nsec3_algorithm_to_str(num):
 
 
 def set_eq_flag(flags, s, flag_name, default, conv):
+    dprint('set_eq_flag, s: %s, flag_name: %s, default: %s' % (s,
+                                                               flag_name,
+                                                               default))
     if s.startswith(flag_name):
         st = s.split('=')
         if len(st) == 1:
@@ -174,6 +179,7 @@ def set_eq_flag(flags, s, flag_name, default, conv):
                 error('Flag %s not expected here.' % flag_name)
         else:
             if flag_name in flags:
+                dprint('st: %s' % st[1])
                 flags[flag_name] = conv(st[1])
             else:
                 error('Flag %s not expected here.' % flag_name)
@@ -193,6 +199,7 @@ def parse_flags(argv, default_flags):
         dprint('parsing flag: %s' % flag)
         if flag[0] == '+':
             flag = flag[1:]
+            # these are flags with =, so with a value
             if set_eq_flag(flags,
                            flag,
                            'udp_payload_size',
@@ -208,13 +215,13 @@ def parse_flags(argv, default_flags):
             elif set_eq_flag(flags,
                              flag,
                              'save-ds-anchors',
-                             '_root.IN.DS',
+                             '_root.IN',
                              str):
                 continue
             elif set_eq_flag(flags,
                              flag,
-                             'save-answer',
-                             '',
+                             'save-answer-prefix',
+                             None,
                              str):
                 continue
             elif set_eq_flag(flags,
@@ -240,11 +247,12 @@ def parse_flags(argv, default_flags):
                           'do',
                           'debug',
                           'help',
+                          'save-answer',
                           'show-file-contents',
                           'show-protocol',
                           'show-friendly']:
                     if flag == f:
-                        if flags.get(f, None) is not None:
+                        if f in flags:
                             flags[f] = val
                             found = True
                             break

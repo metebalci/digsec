@@ -26,7 +26,7 @@ def __read_trust_anchor(s):
             algorithm = int(__read_text_node(kd, 'Algorithm'))
             digest_type = int(__read_text_node(kd, 'DigestType'))
             digest = binascii.unhexlify(__read_text_node(kd, 'Digest'))
-            ds_rr = L2_RR_DS('.',
+            ds_rr = L2_RR_DS('',
                              'IN',
                              60 * 60,
                              keytag,
@@ -49,15 +49,15 @@ def do_download(argv):
     b = r.read()
     trust_anchors = __read_trust_anchor(b.decode('utf-8'))
     print('Trust-Anchor contains keytags: %s' %
-            ', '.join(map(lambda k: '%s-%s' % (k[0], k[1]),
+          ', '.join(map(lambda k: '%s-%s' % (k[0], k[1]),
                         trust_anchors)))
     if len(ds_anchors_filename) == 0 and len(root_anchors_filename) == 0:
         print('Use +save flags to actually save the anchors')
     else:
         if ds_anchors_filename:
             save_rrset(os.getcwd(),
-                        ds_anchors_filename,
-                        map(lambda x: x[2], trust_anchors))
+                       ds_anchors_filename,
+                       map(lambda x: x[2], trust_anchors))
         if root_anchors_filename:
             with open(root_anchors_filename, "wb") as f:
                 f.write(b)

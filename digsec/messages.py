@@ -3,6 +3,7 @@ from collections import namedtuple
 import binascii
 from datetime import datetime
 import base64
+from digsec import dprint
 from digsec.utils import l2s, dns_class_to_int, dns_type_to_int
 from digsec.utils import dns_opcode_to_str, dns_rcode_to_str
 from digsec.utils import dns_class_to_str, dns_type_to_str
@@ -287,11 +288,7 @@ class DNSRR(namedtuple('DNSRR', ['name',
 
     def to_packet(self):
         b = bytearray()
-        # standard dns name notation, len label len label null
-        for namepart in self.name.split('.'):
-            b.append(len(namepart))
-            b.extend(namepart.encode('ascii'))
-        b.append(0)
+        b.extend(encode_name(self.name))
         b.extend(pack('! H H i H',
                       self.typ,
                       self.clas,
@@ -304,11 +301,13 @@ class DNSRR(namedtuple('DNSRR', ['name',
     @staticmethod
     def from_packet(packet, offset):
         (name, offset) = decode_name(packet, offset)
+        dprint('name: "%s", offset: %d' % (name, offset))
         (typ,
          clas,
          ttl,
          rdlength) = unpack('! H H i H',
                             packet[offset:offset + 10])
+        dprint('type: %d, clas: %d, ttl: %d' % (typ, clas, ttl))
         rdata = packet[offset + 10:offset + 10 + rdlength]
         return (DNSRR(name,
                       typ,
@@ -786,7 +785,7 @@ class L2_RR_DNSKEY(namedtuple('L2_RR_DNSKEY', ['name',
         flags, protocol, algorithm = unpack("! H B B",
                                             rr.rdata[0:4])
         # these bits are reserved, MUST be 0
-        assert (flags & 0b1111111011111110) == 0
+        assert (flags & 0b1111111001111110) == 0
         # protocol has to be 3
         assert protocol == 3
         # bit 7
@@ -965,6 +964,22 @@ class L2_RR_DS(namedtuple('L2_RR_DS', ['name',
                         dnssec_digest_type_to_str(digest_type),
                         digest)
 
+    def canonical_l1(self, ttl):
+        rdata = bytearray()
+        rdata.extend(pack('! H B B',
+                          self.keytag,
+                          dnssec_algorithm_to_int(self.algorithm),
+                          dnssec_digest_type_to_int(self.digest_type)))
+        rdata.extend(self.digest)
+        return DNSRR(self.name.lower(),
+                     dns_type_to_int(self.typ),
+                     dns_class_to_int('IN'),
+                     ttl,
+                     len(rdata),
+                     rdata,
+                     None,
+                     None)
+
     def to_rr(self):
         b = bytearray()
         b.extend(pack('! H B B',
@@ -1019,15 +1034,19 @@ def decode_type_bitmaps(rdata, offset):
         (window_block_number,
          bitmap_length) = unpack("! B B",
                                  rdata[offset:offset+2])
+        dprint('window block #: %d, bitmap length: %d' %
+               (window_block_number, bitmap_length))
         offset = offset + 2
         bitmap = rdata[offset:offset + bitmap_length]
         offset = offset + bitmap_length
         for bitmap_index in range(0, bitmap_length):
             bitmap_byte = bitmap[bitmap_index]
-            for k in range(1, 8):
-                if (bitmap_byte & (2 << k)) != 0:
-                    rr_type = window_block_number * 256 + bitmap_index*8 + k
-                    rr_types.append(dns_type_to_str(rr_type))
+            dprint('bitmap_byte: %s' % format(bitmap_byte, '#010b'))
+            for k in range(0, 8):
+                # 7-k because it is in network order
+                if (bitmap_byte & (1 << (7-k))) != 0:
+                    rr_type = window_block_number * 256 + bitmap_index * 8 + k
+                    rr_types.append(rr_type)
     return rr_types
 
 
@@ -1041,7 +1060,7 @@ class L2_RR_NSEC(namedtuple('L2_RR_NSEC', ['name',
 
     @property
     def typ(self):
-        return 'DS'
+        return 'NSEC'
 
     @staticmethod
     def from_rr(rr):
@@ -1051,13 +1070,21 @@ class L2_RR_NSEC(namedtuple('L2_RR_NSEC', ['name',
                           dns_class_to_str(rr.clas),
                           rr.ttl,
                           next_domain_name,
-                          sorted(rr_types))
+                          rr_types)
 
     def to_rr(self):
         pass
 
     def __repr__(self):
         return self.__str__()
+
+    def __str__(self):
+        rr_types_as_str = map(dns_type_to_str, self.rr_types)
+        return '%s %d IN %s %s %s' % (self.name,
+                                      self.ttl,
+                                      self.typ,
+                                      self.next_domain_name,
+                                      ' '.join(rr_types_as_str))
 
 
 class L2_RR_NSEC3(namedtuple('L2_RR_NSEC3', ['name',
@@ -1075,7 +1102,7 @@ class L2_RR_NSEC3(namedtuple('L2_RR_NSEC3', ['name',
 
     @property
     def typ(self):
-        return 'DS'
+        return 'NSEC3'
 
     @staticmethod
     def from_rr(rr):
@@ -1109,6 +1136,7 @@ class L2_RR_NSEC3(namedtuple('L2_RR_NSEC3', ['name',
         return self.__str__()
 
     def __str__(self):
+        rr_types_as_str = map(dns_type_to_str, self.rr_types)
         return ('%s %d %s %s' +
                 '%s %d %d %s %s (%s)') % (self.name,
                                           self.ttl,
@@ -1122,4 +1150,4 @@ class L2_RR_NSEC3(namedtuple('L2_RR_NSEC3', ['name',
                                           base64.b32encode(
                                               self.next_hashed_owner_name).
                                           decode('ascii'),
-                                          ' '.join(self.rr_types))
+                                          ' '.join(rr_types_as_str))

@@ -1,5 +1,5 @@
+import os.path
 from struct import pack, unpack
-import os
 from digsec import dprint
 from digsec.messages import DNSRR
 
@@ -20,34 +20,39 @@ def write_answer_file(filepath, rrlist):
 
 
 def save_rrset(output_dir, filename_prefix, answer):
-        rrs_per_type = {}
-        for rr in answer:
-            if rr.type_str not in rrs_per_type:
-                if rr.type_str == 'RRSIG':
-                    rrs_per_type[rr.type_str] = {}
-                else:
-                    rrs_per_type[rr.type_str] = []
+    rrs_per_type = {}
+    for rr in answer:
+        if rr.type_str not in rrs_per_type:
             if rr.type_str == 'RRSIG':
-                type_covered = rr.l2().type_covered
-                if type_covered not in rrs_per_type[rr.type_str]:
-                    rrs_per_type[rr.type_str][type_covered] = []
-                rrs_per_type[rr.type_str][type_covered].append(rr)
+                rrs_per_type[rr.type_str] = {}
             else:
-                rrs_per_type[rr.type_str].append(rr)
-        dprint('save_answer_file keys: %s' % rrs_per_type.keys())
-        if 'RRSIG' in rrs_per_type.keys():
-            dprint('save_answer_file RRSIG keys: %s' %
-                   rrs_per_type['RRSIG'].keys())
-        for k, v in rrs_per_type.items():
-            if k == 'RRSIG':
-                for k2, v2 in v.items():
-                    filename = '%s.%s.%s' % (filename_prefix, k, k2)
-                    filepath = os.path.join(output_dir, filename)
-                    write_answer_file(filepath, v2)
-            else:
-                filename = '%s.%s' % (filename_prefix, k)
+                rrs_per_type[rr.type_str] = []
+        if rr.type_str == 'RRSIG':
+            type_covered = rr.l2().type_covered
+            if type_covered not in rrs_per_type[rr.type_str]:
+                rrs_per_type[rr.type_str][type_covered] = []
+            rrs_per_type[rr.type_str][type_covered].append(rr)
+        else:
+            rrs_per_type[rr.type_str].append(rr)
+    dprint('save_answer_file keys: %s' % rrs_per_type.keys())
+    if 'RRSIG' in rrs_per_type.keys():
+        dprint('save_answer_file RRSIG keys: %s' %
+               rrs_per_type['RRSIG'].keys())
+    for k, v in rrs_per_type.items():
+        if k == 'RRSIG':
+            for k2, v2 in v.items():
+                filename = '%s.%s.%s' % (filename_prefix, k, k2)
+                dprint('output_dir: %s, filename: %s' %
+                       (output_dir, filename))
                 filepath = os.path.join(output_dir, filename)
-                write_answer_file(filepath, v)
+                dprint('filepath: %s' % filepath)
+                write_answer_file(filepath, v2)
+        else:
+            filename = '%s.%s' % (filename_prefix, k)
+            dprint('output_dir: %s, filename: %s' % (output_dir, filename))
+            filepath = os.path.join(output_dir, filename)
+            dprint('filepath: %s' % filepath)
+            write_answer_file(filepath, v)
 
 
 def read_answer_file(filename):
@@ -61,6 +66,7 @@ def read_answer_file(filename):
             dprint('len_rr: %d' % len_rr)
             rr = f.read(len_rr)
             dnsrr, offset = DNSRR.from_packet(rr, 0)
+            dprint('answer: %s' % str(dnsrr))
             rrs.append(dnsrr)
     dprint('read finished')
     return rrs

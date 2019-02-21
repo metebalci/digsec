@@ -52,23 +52,24 @@ def display_help_query():
           +udp_payload_size=<size>: set UDP payload size (in octets) in EDNS
           +[no]show-friendly: show query and response in friendly format
           +[no]show-protocol: show query and response in protocol format
-          +save-answer=[<prefix>]: save the answer (RRs in protocol format)
-          +save-answer-dir=path: path to save answers
+          +save-answer: save the answer
+          +save-answer-prefix=<prefix>: save file with prefix
+          +save-answer-dir=<path>: save file to path
           +save-packets=filename: save query and response to filename.q and .r
           +help: show this help
           +debug: enable debug mode
 
     Default FLAGS are:
-          +show-friendly
+          if +save-answer is not specified, +show-friendly is implied.
 
     Notes:
     - +do requires +udp_payload_size=<size>
-    - Default prefix for +save-answer is empty string
-    - Default save-answer path is current working directory
-    - Filename for +save is:
+    - Filename for +save-answer is:
         - For non-RRSIG answers: [prefix]qname.qclass.qtype
         - For RRSIG answers: [prefix]qname.qclass.qtype.RRSIG_type_covered
           because there is a different RRSIG for each type
+        - If prefix is not specified, it is empty string
+        - If dir is not specified, it is current working directory
     - For filenames, "_root" is used if qname is dot "."
 
     Why udp_payload_size is a must ?

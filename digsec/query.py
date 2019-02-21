@@ -80,22 +80,39 @@ def do_query(argv):
                      'cd': False,
                      'do': False,
                      'udp_payload_size': None,
-                     'save-answer': None,
-                     'save-answer-dir': os.getcwd(),
                      'show-protocol': False,
+                     'save-answer': False,
+                     'save-answer-prefix': None,
+                     'save-answer-dir': None,
                      'save-packets': None,
-                     'show-friendly': True}
+                     'show-friendly': False}
     flags = parse_flags(argv, default_flags)
     dprint(flags)
 
     if flags['do'] and (flags['udp_payload_size'] is None):
         error('+do requires +udp_payload_size=<size>')
 
+    save_answer = flags['save-answer']
     show_protocol = flags['show-protocol']
     save_packets = flags['save-packets']
-    save_answer = flags['save-answer']
+    save_answer_prefix = flags['save-answer-prefix']
     save_answer_dir = flags['save-answer-dir']
     show_friendly = flags['show-friendly']
+
+    if save_answer:
+        if save_answer_prefix is None:
+            save_answer_prefix = ''
+        # if not given, save to current working dir
+        if save_answer_dir is None:
+            save_answer_dir = os.getcwd()
+        else:
+            # if given and it is a relative path, save to current wc + given
+            if not os.path.isabs(save_answer_dir):
+                save_answer_dir = os.path.join(os.getcwd(), save_answer_dir)
+        if not os.path.exists(save_answer_dir):
+            error('save-answer-path: "%s" does not exist' % save_answer_dir)
+    else:
+        show_friendly = True
 
     dns_query = make_query_message(qname,
                                    qtype,
@@ -141,11 +158,12 @@ def do_query(argv):
         print(dns_response_message)
         print()
 
-    # it can be '' and this means False if used alone in if
-    if save_answer is not None:
-        filename_prefix = '%s%s.%s' % (save_answer,
+    if save_answer:
+        filename_prefix = '%s%s.%s' % (save_answer_prefix,
                                        qname if len(qname) > 0 else '_root',
                                        qclass)
+        dprint('save_answer_dir: %s, filename_prefix: %s' % (save_answer_dir,
+                                                             filename_prefix))
         save_rrset(save_answer_dir,
                    filename_prefix,
                    dns_response_message.answer)

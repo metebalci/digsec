@@ -10,7 +10,7 @@ def reverse_dict(d):
 # source: https://www.iana.org/assignments/dns-parameters/dns-parameters.xhtml
 DNS_CLASS_TO_INT = {}
 DNS_CLASS_TO_INT['IN'] = 1
-DNS_CLASS_TO_INT['*'] = 255
+DNS_CLASS_TO_INT['ANY'] = 255
 DNS_CLASS_TO_STR = reverse_dict(DNS_CLASS_TO_INT)
 
 
@@ -19,7 +19,11 @@ DNS_CLASS_TO_STR = reverse_dict(DNS_CLASS_TO_INT)
 DNS_TYPE_TO_INT = {}
 DNS_TYPE_TO_INT['A'] = 1
 DNS_TYPE_TO_INT['NS'] = 2
+DNS_TYPE_TO_INT['CNAME'] = 5
 DNS_TYPE_TO_INT['SOA'] = 6
+DNS_TYPE_TO_INT['PTR'] = 12
+DNS_TYPE_TO_INT['MX'] = 15
+DNS_TYPE_TO_INT['TXT'] = 16
 DNS_TYPE_TO_INT['AAAA'] = 28
 DNS_TYPE_TO_INT['OPT'] = 41
 DNS_TYPE_TO_INT['DS'] = 43
@@ -27,7 +31,7 @@ DNS_TYPE_TO_INT['RRSIG'] = 46
 DNS_TYPE_TO_INT['NSEC'] = 47
 DNS_TYPE_TO_INT['DNSKEY'] = 48
 DNS_TYPE_TO_INT['NSEC3'] = 50
-DNS_TYPE_TO_INT['*'] = 255
+DNS_TYPE_TO_INT['ANY'] = 255
 DNS_TYPE_TO_STR = reverse_dict(DNS_TYPE_TO_INT)
 
 

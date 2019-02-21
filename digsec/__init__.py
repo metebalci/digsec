@@ -1,4 +1,5 @@
 import sys
+import os
 
 
 __DEBUG = False
@@ -19,3 +20,8 @@ def dprint(*args):
 def error(msg):
     print('Error: %s' % msg)
     sys.exit(1)
+
+
+def ensure_file_exists(filename):
+    if not os.path.isfile(filename):
+        error('file does not exist: %s' % filename)
