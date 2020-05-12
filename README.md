@@ -19,7 +19,7 @@ Just run digsec to see options and help, or see this blog post https://metebalci
 
 # Release History
 
-0.3: 
+0.4: 
   - ECDSAP256SHA256 implemented. 
   - @server option added. 
   - validate_second_level_domain.sh script added.
