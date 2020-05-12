@@ -839,6 +839,15 @@ class L2_RR_DNSKEY(namedtuple('L2_RR_DNSKEY', ['name',
         # same format
         return self.rsasha1_public_key()
 
+    # RFC 6605
+    def ecdsap256sha256_curve_point(self):
+        # q is in uncompressed form curve point x | y
+        # in uncompressed form, public key len is 2*field_length+1
+        # field_length for p256 is 256 bits, thus 32 bytes
+        # so uncompressed form public key len is 65 bytes
+        q_uncompressed_bytes = self.public_key
+        return q_uncompressed_bytes
+
 
 class L2_RR_RRSIG(namedtuple('L2_RR_RRSIG', ['name',
                                              'clas',
