@@ -1,0 +1,8 @@
+dist: xenial
+language: python
+python: 3.6
+install:
+  - pip install -r requirements.txt
+script:
+  - pip install -e .
+  - bash scripts/validate_second_level_domain.sh metebalci.com A /tmp 8.8.8.8
