@@ -12,4 +12,4 @@ Just run digsec to see options and help, or see this blog post https://metebalci
 
 # Release History
 
-- 0.3: ECDSAP256SHA256 implemented.
+- 0.3: ECDSAP256SHA256 implemented. @server option added.

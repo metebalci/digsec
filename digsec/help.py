@@ -41,7 +41,7 @@ def display_help():
 def display_help_query():
     display_help_header()
     print('''
-    digsec query <qname> [<qtype>] [<qclass>] <flags>
+    digsec query [@server] <qname> [<qtype>] [<qclass>] <flags>
 
     Use dot "." as qname to query for root domain.
 
@@ -61,6 +61,7 @@ def display_help_query():
 
     Default FLAGS are:
           if +save-answer is not specified, +show-friendly is implied.
+          if server is not specified, Google Public DNS 8.8.8.8 is used at port 53.
 
     Notes:
     - +do requires +udp_payload_size=<size>
@@ -86,7 +87,7 @@ def display_help_download():
 
     FLAGS are:
           [+save-root-anchors=[<filename>]]: save downloaded root anchor file
-          [+save-ds-anchors=[<filename>]]: save trust anchor for validate
+          [+save-ds-anchors=[<filename_prefix>]]: save trust anchor for validate, .DS suffix is added automatically
           +help: show this help
           +debug: enable debug mode
 

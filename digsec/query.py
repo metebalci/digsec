@@ -51,8 +51,13 @@ def make_query_message(qname,
 
 
 def do_query(argv):
-    non_plus = list(filter(lambda x: x[0] != '+', argv))
+    non_plus_and_at = list(filter(lambda x: x[0] != '+', argv))
+    non_plus = list(filter(lambda x: x[0] != '@', non_plus_and_at))
+    dprint('non_plus:')
     dprint(non_plus)
+    at = list(filter(lambda x: x[0] == '@', argv))
+    dprint('at')
+    dprint(at)
     if len(non_plus) == 0:
         error('Missing arguments')
         display_help_query()
@@ -114,6 +119,15 @@ def do_query(argv):
     else:
         show_friendly = True
 
+    if len(at) > 0:
+        server_and_port = at[0][1:].split(':')
+        if len(server_and_port) == 1:
+            server = server_and_port[0]
+            port = 53
+    else:
+        server = '8.8.8.8'
+        port = 53
+
     dns_query = make_query_message(qname,
                                    qtype,
                                    qclass,
@@ -144,7 +158,7 @@ def do_query(argv):
         print('<<< NETWORK COMMUNICATION >>>')
         print()
 
-    dns_response_packet = send_recv(dns_query_packet)
+    dns_response_packet = send_recv(dns_query_packet, server, port)
 
     if save_packets:
         with open('%s.r' % save_packets, 'wb') as f:
