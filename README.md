@@ -1,5 +1,7 @@
 # digsec
 
+[![Build Status](https://travis-ci.com/metebalci/digsec.svg?branch=master)](https://travis-ci.com/metebalci/digsec)
+
 dig like command line utility to understand DNSSEC.
 
 # Install
