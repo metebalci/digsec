@@ -156,6 +156,7 @@ def do_query(argv):
 
     if show_protocol or show_friendly:
         print('<<< NETWORK COMMUNICATION >>>')
+        print('Server: %s:%d' % (server, port))
         print()
 
     dns_response_packet = send_recv(dns_query_packet, server, port)
