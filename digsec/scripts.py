@@ -1,5 +1,5 @@
 import sys
-from digsec import enable_debug, dprint
+from digsec import enable_debug, dprint, DIGSEC_VERSION
 from digsec.help import display_help, display_help_query
 from digsec.help import display_help_validate, display_help_download
 from digsec.query import do_query
@@ -9,6 +9,7 @@ from digsec.utils import has_flag
 
 
 def main():
+    print('digsec v%s' % DIGSEC_VERSION)
     if has_flag('+debug'):
         enable_debug()
         dprint('Debug mode enabled.')

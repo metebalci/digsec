@@ -19,6 +19,11 @@ Just run digsec to see options and help, or see this blog post https://metebalci
 
 # Release History
 
+0.5:
+  - Preliminary support for ECDSAP384SHA384, RSA-512, SHA-384.
+  - Server the DNS packet is sent is written under NETWORK COMMUNICATION line.
+  - digsec version is written at first line in the output as digsec vX.
+
 0.4: 
   - ECDSAP256SHA256 implemented. 
   - @server option added. 
