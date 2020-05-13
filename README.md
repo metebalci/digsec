@@ -15,7 +15,12 @@ Just run digsec to see options and help, or see this blog post https://metebalci
 # Hints
 
 - digsec do not add DNS flags implicitly. You might need to use +rd (recursive desired) often.
+
 - see scripts/validate_second_level_domain.sh and run it to see a full validation.
+
+# Notes
+
+ECDSAP384SHA384, RSA-512 and SHA-384 support is not tested. If you know a domain using these algorithms, please let me know.
 
 # Release History
 
