@@ -839,12 +839,23 @@ class L2_RR_DNSKEY(namedtuple('L2_RR_DNSKEY', ['name',
         # same format
         return self.rsasha1_public_key()
 
+    # RFC 5702
+    def rsasha512_public_key(self):
+        # same format
+        return self.rsasha1_public_key()
+
     # RFC 6605
     def ecdsap256sha256_curve_point(self):
         # q is in uncompressed form curve point x | y
         # in uncompressed form, public key len is 2*field_length+1
         # field_length for p256 is 256 bits, thus 32 bytes
         # so uncompressed form public key len is 65 bytes
+        q_uncompressed_bytes = self.public_key
+        return q_uncompressed_bytes
+
+    # RFC 6605
+    def ecdsap384sha384_curve_point(self):
+        # same format
         q_uncompressed_bytes = self.public_key
         return q_uncompressed_bytes
 
@@ -945,6 +956,11 @@ class L2_RR_RRSIG(namedtuple('L2_RR_RRSIG', ['name',
         # same format
         return self.rsasha1_public_key()
 
+    # RFC 5702
+    def rsasha512_public_key(self):
+        # same format
+        return self.rsasha1_public_key()
+
 
 class L2_RR_DS(namedtuple('L2_RR_DS', ['name',
                                        'clas',
@@ -1017,24 +1033,6 @@ class L2_RR_DS(namedtuple('L2_RR_DS', ['name',
                                             self.digest_type,
                                             binascii.hexlify(self.digest)
                                             .decode('ascii'))
-
-    # RFC 3110
-    def rsasha1_public_key(self):
-        exponent_length = self.public_key[0]
-        off = 1
-        if exponent_length == 0:
-            exponent_length = unpack('H', self.public_key[1:2])
-            off = 3
-        exponent = int.from_bytes(self.public_key[off:off+exponent_length],
-                                  byteorder='big')
-        modulus = int.from_bytes(self.public_key[off+exponent_length:],
-                                 byteorder='big')
-        return exponent, modulus
-
-    # RFC 5702
-    def rsasha256_public_key(self):
-        # same format
-        return self.rsasha1_public_key()
 
 
 def decode_type_bitmaps(rdata, offset):
