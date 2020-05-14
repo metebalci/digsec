@@ -207,6 +207,12 @@ def parse_flags(argv, default_flags):
                            int):
                 continue
             elif set_eq_flag(flags,
+                           flag,
+                           'timeout',
+                           None,
+                           float):
+                continue
+            elif set_eq_flag(flags,
                              flag,
                              'save-root-anchors',
                              'root-anchors.xml',

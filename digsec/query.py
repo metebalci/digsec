@@ -85,6 +85,7 @@ def do_query(argv):
                      'cd': False,
                      'do': False,
                      'udp_payload_size': None,
+                     'timeout': 1.0,
                      'show-protocol': False,
                      'save-answer': False,
                      'save-answer-prefix': None,
@@ -159,7 +160,10 @@ def do_query(argv):
         print('Server: %s:%d' % (server, port))
         print()
 
-    dns_response_packet = send_recv(dns_query_packet, server, port)
+    dns_response_packet = send_recv(dns_query_packet, server, port, flags['timeout'])
+
+    if dns_response_packet is None:
+        return
 
     if save_packets:
         with open('%s.r' % save_packets, 'wb') as f:

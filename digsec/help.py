@@ -50,6 +50,7 @@ def display_help_query():
           +[no]cd: set/reset Checking Disabled flag
           +[no]do: set/reset DNSSEC OK bit in EDNS
           +udp_payload_size=<size>: set UDP payload size (in octets) in EDNS
+          +timeout=<timeout>: set socket timeout in seconds (float), default is 1 seconds
           +[no]show-friendly: show query and response in friendly format
           +[no]show-protocol: show query and response in protocol format
           +save-answer: save the answer

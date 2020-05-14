@@ -24,6 +24,9 @@ ECDSAP384SHA384, RSA-512 and SHA-384 support is not tested. If you know a domain
 
 # Release History
 
+0.6:
+  - Socket timeout support and +timeout flag.
+
 0.5:
   - Preliminary support for ECDSAP384SHA384, RSA-512, SHA-384.
   - Server the DNS packet is sent is written under NETWORK COMMUNICATION line.
