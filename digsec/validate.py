@@ -74,8 +74,8 @@ def validate_rrsig(corresponding_rrsig_filename,
         dprint('Using DNSKEY name: %s, keytag: %d, algorithm: %s' %
                (dnskey.name, dnskey.keytag, dnskey.algorithm))
 
-        verified = verification_algorithm(signed_data,
-                                          rrsig.signature,
+        verified = verification_algorithm(bytes(signed_data),
+                                          bytes(rrsig.signature),
                                           dnskey)
         if verified:
             return True, dnskey
