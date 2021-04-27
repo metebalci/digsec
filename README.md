@@ -24,6 +24,9 @@ ECDSAP384SHA384, RSA-512 and SHA-384 support is not tested. If you know a domain
 
 # Release History
 
+0.7.1:
+  - rsa update in 0.7 broke the build, this version fixes the issue.
+
 0.7:
   - required packages (rsa and ecdsa) are updated to latest version
 
