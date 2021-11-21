@@ -1,6 +1,6 @@
 # digsec
 
-[![Build Status](https://travis-ci.com/metebalci/digsec.svg?branch=master)](https://travis-ci.com/metebalci/digsec)
+[![CircleCI](https://circleci.com/gh/metebalci/digsec/tree/master.svg?style=svg)](https://circleci.com/gh/metebalci/digsec/tree/master)
 
 dig like command line utility to understand DNSSEC.
 
