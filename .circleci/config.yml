@@ -1,0 +1,9 @@
+version: 2.1
+
+jobs:
+  build:
+    docker:
+      - image: circleci/python:3.6
+    steps:
+      - checkout
+      - run: bash scripts/validate_second_level_domain.sh metebalci.com A /tmp 8.8.8.8
