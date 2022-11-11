@@ -10,3 +10,5 @@ jobs:
       - run: pip install -e .
       - run: pylint digsec/*.py --disable=fixme --disable=consider-using-f-string
       - run: bash scripts/validate_second_level_domain.sh metebalci.com A /tmp 8.8.8.8
+      - run: bash digsec query metebalci.com A +rd
+      - run: bash digsec query metebalci.com TXT +rd
