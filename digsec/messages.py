@@ -296,6 +296,7 @@ class DNSRR(namedtuple('DNSRR', ['name',
                             packet[offset:offset + 10])
         dprint('type: %d, clas: %d, ttl: %d' % (typ, clas, ttl))
         rdata = packet[offset + 10:offset + 10 + rdlength]
+        dprint('rdata (%d): 0x%s' % (len(rdata), binascii.hexlify(rdata).decode('ascii')))
         return (DNSRR(name,
                       typ,
                       clas,
@@ -323,6 +324,7 @@ class DNSRR(namedtuple('DNSRR', ['name',
     def l2(self):
         m = {}
         m['A'] = L2_RR_A
+        m['TXT'] = L2_RR_TXT
         m['NS'] = L2_RR_NS
         m['SOA'] = L2_RR_SOA
         m['DNSKEY'] = L2_RR_DNSKEY
@@ -623,6 +625,63 @@ class L2_RR_A(namedtuple('L2_RR_A', ['name',
                                    self.clas,
                                    self.typ,
                                    self.address)
+
+
+class L2_RR_TXT(namedtuple('L2_RR_TXT', ['name',
+                                         'clas',
+                                         'ttl',
+                                         'txtdatas'])):
+
+    __slots__ = ()
+
+    @property
+    def typ(self):
+        return 'TXT'
+
+    # RFC 4034 Section 6.2
+    def canonical_l1(self, ttl):
+        rdata = []
+        for txtdata in self.txtdatas:
+            asbytes = txtdata.encode('ascii')
+            rdata.extend(len(asbytes))
+            rdata.extend(asbytes)
+        return DNSRR(self.name.lower(),
+                     dns_type_to_int(self.typ),
+                     dns_class_to_int('TXT'),
+                     ttl,
+                     len(rdata),
+                     rdata,
+                     None,
+                     None)
+
+    @staticmethod
+    def from_rr(rr):
+        roffset = 0
+        txtdatas = []
+        while roffset < len(rr.rdata):
+            txtdatalen = rr.rdata[roffset]
+            txtdata = rr.rdata[roffset+1:roffset+1+txtdatalen]
+            dprint('txtdata: 0x%s' %
+                   (binascii.hexlify(txtdata).decode('ascii'),))
+            txtdata = bytes(txtdata).decode('ascii')
+            dprint('txtdata: %s' % (txtdata,))
+            txtdatas.append(txtdata)
+            # +1 is txtdatalen itself
+            roffset = roffset + txtdatalen + 1
+        return L2_RR_TXT(rr.name,
+                         dns_class_to_str(rr.clas),
+                         rr.ttl,
+                         txtdatas)
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __str__(self):
+        return '%s %d %s %s %s' % (self.name,
+                                   self.ttl,
+                                   self.clas,
+                                   self.typ,
+                                   '|'.join(self.txtdatas))
 
 
 class L2_RR_SOA(namedtuple('L2_RR_SOA', ['name',
