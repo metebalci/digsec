@@ -9,4 +9,7 @@ jobs:
       - run: pip install pylint
       - run: pip install -e .
       - run: pylint digsec/*.py --disable=fixme --disable=consider-using-f-string
-      - run: bash scripts/test.sh
+      - run: scripts/validate.py . DNSKEY
+      - run: scripts/validate.py com DNSKEY
+      - run: scripts/validate.py metebalci.com DNSKEY
+      - run: scripts/validate.py metebalci.com A
