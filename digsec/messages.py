@@ -640,14 +640,14 @@ class L2_RR_TXT(namedtuple('L2_RR_TXT', ['name',
 
     # RFC 4034 Section 6.2
     def canonical_l1(self, ttl):
-        rdata = []
+        rdata = bytearray()
         for txtdata in self.txtdatas:
             asbytes = txtdata.encode('ascii')
-            rdata.extend(len(asbytes))
+            rdata.append(len(asbytes))
             rdata.extend(asbytes)
         return DNSRR(self.name.lower(),
                      dns_type_to_int(self.typ),
-                     dns_class_to_int('TXT'),
+                     dns_class_to_int('IN'),
                      ttl,
                      len(rdata),
                      rdata,
