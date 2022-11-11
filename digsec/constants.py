@@ -1,3 +1,8 @@
+# pylint: disable=missing-function-docstring
+# pylint: disable=invalid-name
+"""
+constants used in the project
+"""
 # make a dictionary[k, v] from dictionary[v, k]
 def reverse_dict(d):
     rd = {}

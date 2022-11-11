@@ -1,8 +1,15 @@
-from struct import pack, unpack
-from collections import namedtuple
-import binascii
-from datetime import datetime
+# pylint: disable=missing-function-docstring
+# pylint: disable=invalid-name
+# pylint: disable=missing-class-docstring
+# pylint: disable=too-many-lines
+"""
+handles DNS messages
+"""
 import base64
+import binascii
+from collections import namedtuple
+from datetime import datetime
+from struct import pack, unpack
 from digsec import dprint
 from digsec.utils import l2s, dns_class_to_int, dns_type_to_int
 from digsec.utils import dns_opcode_to_str, dns_rcode_to_str
@@ -52,7 +59,7 @@ class DNSMessage(namedtuple('DNSMessage', ['header',
                                             DNSRR,
                                             DNSRR,
                                             DNSRR]):
-            for i in range(0, count):
+            for _i in range(0, count):
                 rr, newoffset = rrclass.from_packet(packet, offset)
                 if isinstance(rr, DNSRR) and rr.typ == dns_type_to_int('OPT'):
                     rr, newoffset = DNSOptRR.from_packet(packet, offset)
@@ -182,35 +189,14 @@ class DNSFlags(namedtuple('DNSFlags', ['qr',
 
     def __str__(self):
         fs = []
-        if self.qr:
-            fs.append('QR')
-        else:
-            fs.append('__')
+        fs.append('QR' if self.qr else '__')
         fs.append('%04X' % self.opcode)
-        if self.aa:
-            fs.append('AA')
-        else:
-            fs.append('__')
-        if self.tc:
-            fs.append('TC')
-        else:
-            fs.append('__')
-        if self.rd:
-            fs.append('RD')
-        else:
-            fs.append('__')
-        if self.ra:
-            fs.append('RA')
-        else:
-            fs.append('__')
-        if self.ad:
-            fs.append('AD')
-        else:
-            fs.append('__')
-        if self.cd:
-            fs.append('CD')
-        else:
-            fs.append('__')
+        fs.append('AA' if self.aa else '__')
+        fs.append('TC' if self.tc else '__')
+        fs.append('RD' if self.rd else '__')
+        fs.append('RA' if self.ra else '__')
+        fs.append('AD' if self.ad else '__')
+        fs.append('CD' if self.cd else '__')
         fs.append('%04X' % self.rcode)
         return '%s' % (' '.join(fs))
 
@@ -247,7 +233,8 @@ class DNSQuestionRR(namedtuple('DNSQuestionRR', ['qname',
         b.extend(pack('! H H', self.qtype, self.qclass))
         return b
 
-    def from_packet(packet, offset):
+    # pylint: disable=no-self-use
+    def from_packet(self, packet, offset):
         (qname, offset) = decode_name(packet, offset)
         (qtype, qclass) = unpack('! H H', packet[offset:offset + 4])
         return DNSQuestionRR(qname,
@@ -394,15 +381,16 @@ class DNSOptRR(namedtuple('DNSOptRR', ['udp_payload_size',
         b.extend(rdata)
         return b
 
+    # pylint: disable=too-many-locals
     @staticmethod
     def from_packet(packet, offset):
-        (name,
-         typ,
+        (_name,
+         _typ,
          udp_payload_size,
          extended_rcode,
          version,
          DO,
-         Z,
+         _Z,
          rdlength) = unpack('! B H H B B B B H',
                             packet[offset:offset + 11])
         DO = ((DO & 0b10000000) != 0)
@@ -441,6 +429,7 @@ class DNSOptRR(namedtuple('DNSOptRR', ['udp_payload_size',
     def __repr__(self):
         return self.__str__()
 
+    # pylint: disable=no-self-use
     def l2(self):
         return None
 
@@ -938,28 +927,29 @@ class L2_RR_RRSIG(namedtuple('L2_RR_RRSIG', ['name',
                                      base64.b64encode(self.signature)
                                      .decode('ascii'))
 
+# no public_key of L2_RR_RRSIG, is this code used ???
     # RFC 3110
-    def rsasha1_public_key(self):
-        exponent_length = self.public_key[0]
-        off = 1
-        if exponent_length == 0:
-            exponent_length = unpack('H', self.public_key[1:2])
-            off = 3
-        exponent = int.from_bytes(self.public_key[off:off+exponent_length],
-                                  byteorder='big')
-        modulus = int.from_bytes(self.public_key[off+exponent_length:],
-                                 byteorder='big')
-        return exponent, modulus
+#    def rsasha1_public_key(self):
+#        exponent_length = self.public_key[0]
+#        off = 1
+#        if exponent_length == 0:
+#            exponent_length = unpack('H', self.public_key[1:2])
+#            off = 3
+#        exponent = int.from_bytes(self.public_key[off:off+exponent_length],
+#                                  byteorder='big')
+#        modulus = int.from_bytes(self.public_key[off+exponent_length:],
+#                                 byteorder='big')
+#        return exponent, modulus
 
     # RFC 5702
-    def rsasha256_public_key(self):
+#    def rsasha256_public_key(self):
         # same format
-        return self.rsasha1_public_key()
+#       return self.rsasha1_public_key()
 
     # RFC 5702
-    def rsasha512_public_key(self):
+#    def rsasha512_public_key(self):
         # same format
-        return self.rsasha1_public_key()
+#        return self.rsasha1_public_key()
 
 
 class L2_RR_DS(namedtuple('L2_RR_DS', ['name',

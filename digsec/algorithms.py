@@ -1,7 +1,11 @@
+# pylint: disable=missing-function-docstring
+# pylint: disable=invalid-name
+"""
+helpers to use algorithms
+"""
 import hashlib
 import rsa
-import binascii
-from ecdsa import VerifyingKey, NIST256p, NIST384p
+from ecdsa import VerifyingKey, NIST256p, NIST384p, BadSignatureError
 
 
 def hash_common(m, data, digest):

@@ -1,3 +1,8 @@
+# pylint: disable=missing-function-docstring
+# pylint: disable=invalid-name
+"""
+handles query command
+"""
 import os
 from digsec.messages import DNSMessage, DNSHeader, DNSFlags
 from digsec.messages import DNSQuestionRR, DNSOptRR
@@ -9,6 +14,7 @@ from digsec.help import display_help_query
 from digsec.comm import send_recv
 
 
+# pylint: disable=too-many-arguments
 # decision of including OPT is by udp_payload_size, since it is a must in OPT
 def make_query_message(qname,
                        qtype,
@@ -50,6 +56,10 @@ def make_query_message(qname,
     return dns_message
 
 
+# pylint: disable=too-many-locals
+# pylint: disable=too-many-branches
+# pylint: disable=too-many-statements
+# TODO: can be improved
 def do_query(argv):
     non_plus_and_at = list(filter(lambda x: x[0] != '+', argv))
     non_plus = list(filter(lambda x: x[0] != '@', non_plus_and_at))
@@ -77,7 +87,7 @@ def do_query(argv):
         error('Too many arguments, see usage')
     # requests for root need empty qname
     if qname == '.':
-        qname == ''
+        qname = ''
     # ignore last dot
     if qname.endswith('.'):
         qname = qname[:-1]

@@ -1,3 +1,7 @@
+# pylint: disable=missing-function-docstring
+"""
+handles network/socket communication with DNS servers
+"""
 import socket
 import binascii
 from digsec import dprint

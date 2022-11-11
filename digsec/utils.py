@@ -1,4 +1,10 @@
+# pylint: disable=missing-function-docstring
+# pylint: disable=invalid-name
+"""
+various utility functions
+"""
 import random
+import sys
 from digsec import dprint, error
 from digsec.constants import DNS_CLASS_TO_INT, DNS_TYPE_TO_INT
 from digsec.constants import DNS_CLASS_TO_STR, DNS_TYPE_TO_STR
@@ -8,7 +14,6 @@ from digsec.constants import DNSSEC_ALGORITHM_TO_INT, DNSSEC_DIGEST_TYPE_TO_INT
 from digsec.constants import DNSSEC_ALGORITHM_TO_STR, DNSSEC_DIGEST_TYPE_TO_STR
 from digsec.constants import DNSSEC_NSEC3_ALGORITHM_TO_INT
 from digsec.constants import DNSSEC_NSEC3_ALGORITHM_TO_STR
-import sys
 
 
 def has_flag(flag):
@@ -32,7 +37,7 @@ def calculate_keytag(rdata):
         else:
             ac += (key[i] << 8)
     ac += (ac >> 16) & 0xFFFF
-    return (ac & 0xFFFF)
+    return ac & 0xFFFF
 
 
 # generate a random unsigned short id to use in DNS Messages
@@ -71,7 +76,7 @@ def decode_labels(p, offset):
             # make an unsigned 14-bit number
             pointer = ((qnamepartlen & 0b00111111) << 8) | p[i]
             i = i + 1
-            (pointedlabels, pointedoffset) = decode_labels(p, pointer)
+            (pointedlabels, _pointedoffset) = decode_labels(p, pointer)
             dprint('decoded labels: %s' % pointedlabels)
             # pointed part can be full or partial
             qnameparts.extend(pointedlabels)
@@ -184,10 +189,12 @@ def set_eq_flag(flags, s, flag_name, default, conv):
             else:
                 error('Flag %s not expected here.' % flag_name)
         return True
-    else:
-        return False
+
+    return False
 
 
+# pylint: disable=too-many-nested-blocks
+# pylint: disable=too-many-branches
 def parse_flags(argv, default_flags):
     flags = default_flags
     # adding debug and help here to not raise error later
@@ -206,64 +213,69 @@ def parse_flags(argv, default_flags):
                            None,
                            int):
                 continue
-            elif set_eq_flag(flags,
+
+            if set_eq_flag(flags,
                            flag,
                            'timeout',
                            None,
                            float):
                 continue
-            elif set_eq_flag(flags,
-                             flag,
-                             'save-root-anchors',
-                             'root-anchors.xml',
-                             str):
+
+            if set_eq_flag(flags,
+                           flag,
+                           'save-root-anchors',
+                           'root-anchors.xml',
+                           str):
                 continue
-            elif set_eq_flag(flags,
-                             flag,
-                             'save-ds-anchors',
-                             '_root.IN',
-                             str):
+
+            if set_eq_flag(flags,
+                           flag,
+                           'save-ds-anchors',
+                           '_root.IN',
+                           str):
                 continue
-            elif set_eq_flag(flags,
-                             flag,
-                             'save-answer-prefix',
-                             None,
-                             str):
+
+            if set_eq_flag(flags,
+                           flag,
+                           'save-answer-prefix',
+                           None,
+                           str):
                 continue
-            elif set_eq_flag(flags,
-                             flag,
-                             'save-packets',
-                             None,
-                             str):
+
+            if set_eq_flag(flags,
+                           flag,
+                           'save-packets',
+                           None,
+                           str):
                 continue
-            elif set_eq_flag(flags,
-                             flag,
-                             'save-answer-dir',
-                             None,
-                             str):
+
+            if set_eq_flag(flags,
+                           flag,
+                           'save-answer-dir',
+                           None,
+                           str):
                 continue
-            else:
-                val = True
-                if flag[0:2] == 'no':
-                    val = False
-                    flag = flag[3:]
-                found = False
-                for f in ['rd',
-                          'cd',
-                          'do',
-                          'debug',
-                          'help',
-                          'save-answer',
-                          'show-file-contents',
-                          'show-protocol',
-                          'show-friendly']:
-                    if flag == f:
-                        if f in flags:
-                            flags[f] = val
-                            found = True
-                            break
-                        else:
-                            error('Flag %s not expected here.' % flag)
-                if not found:
-                    error('Flag %s unknown.' % flag)
+
+            val = True
+            if flag[0:2] == 'no':
+                val = False
+                flag = flag[3:]
+            found = False
+            for f in ['rd',
+                      'cd',
+                      'do',
+                      'debug',
+                      'help',
+                      'save-answer',
+                      'show-file-contents',
+                      'show-protocol',
+                      'show-friendly']:
+                if flag == f:
+                    if f in flags:
+                        flags[f] = val
+                        found = True
+                        break
+                    error('Flag %s not expected here.' % flag)
+            if not found:
+                error('Flag %s unknown.' % flag)
     return flags

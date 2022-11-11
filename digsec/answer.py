@@ -1,3 +1,8 @@
+# pylint: disable=missing-function-docstring
+# pylint: disable=invalid-name
+"""
+handles answers
+"""
 import os.path
 from struct import pack, unpack
 from digsec import dprint
@@ -61,11 +66,11 @@ def read_answer_file(filename):
     with open(filename, "rb") as f:
         num_rrs, = unpack('! H', f.read(2))
         dprint('num_rrs: %d' % num_rrs)
-        for i in range(0, num_rrs):
+        for _i in range(0, num_rrs):
             len_rr, = unpack('! H', f.read(2))
             dprint('len_rr: %d' % len_rr)
             rr = f.read(len_rr)
-            dnsrr, offset = DNSRR.from_packet(rr, 0)
+            dnsrr, _offset = DNSRR.from_packet(rr, 0)
             dprint('answer: %s' % str(dnsrr))
             rrs.append(dnsrr)
     dprint('read finished')

@@ -6,5 +6,6 @@ jobs:
       - image: circleci/python:3.6
     steps:
       - checkout
+      - run: pylint digsec/*.py
       - run: pip install -e .
       - run: bash scripts/validate_second_level_domain.sh metebalci.com A /tmp 8.8.8.8

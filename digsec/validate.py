@@ -1,5 +1,10 @@
-import sys
+# pylint: disable=missing-function-docstring
+# pylint: disable=invalid-name
+"""
+handles validate command
+"""
 import binascii
+import sys
 from datetime import datetime
 from digsec import dprint, error, ensure_file_exists
 from digsec.algorithms import dnssec_algorithms, dnssec_digests
@@ -103,6 +108,9 @@ def validate_dnskey(dnskey_filename, dnskey, ds):
     return verified
 
 
+# pylint: disable=too-many-branches
+# pylint: disable=too-many-locals
+# pylint: disable=too-many-statements
 def do_validate(argv):
     if len(argv) < 3:
         display_help_validate()
@@ -220,9 +228,11 @@ def do_validate(argv):
                 # checking the dnskey signed RRSIG is same as the one
                 #  having the digest in DS
                 dprint(ds_rrset)
+                def sorting_lambda(keytag):
+                    return lambda x: x.keytag == keytag
                 selected_ds_list = list(
                     filter(
-                        lambda x: x.keytag == dnskey_signed_rrsig.keytag,
+                        sorting_lambda(dnskey_signed_rrsig.keytag),
                         ds_rrset))
                 if len(selected_ds_list) == 0:
                     print('WARNING: no DS for DNSKEY with keytag: %d' %

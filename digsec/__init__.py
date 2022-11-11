@@ -1,5 +1,7 @@
-import sys
+# pylint: disable=missing-module-docstring
+# pylint: disable=missing-function-docstring
 import os
+import sys
 
 
 DIGSEC_VERSION = '0.7.1'
@@ -7,11 +9,13 @@ __DEBUG = False
 
 
 def enable_debug():
+    # pylint: disable=global-statement
     global __DEBUG
     __DEBUG = True
 
 
 def dprint(*args):
+    # pylint: disable=global-statement
     global __DEBUG
     if __DEBUG:
         print('DEBUG: ', end='')

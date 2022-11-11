@@ -1,3 +1,7 @@
+# pylint: disable=missing-function-docstring
+"""
+displays help
+"""
 import sys
 
 

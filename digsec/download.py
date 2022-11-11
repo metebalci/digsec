@@ -1,11 +1,16 @@
+# pylint: disable=missing-function-docstring
+# pylint: disable=invalid-name
+"""
+handles download command
+"""
 import os
+import urllib.request
+import xml.dom.minidom
+import binascii
 from digsec.answer import save_rrset
 from digsec.utils import parse_flags, dprint
 from digsec.messages import L2_RR_DS
 from digsec.utils import dnssec_algorithm_to_str, dnssec_digest_type_to_str
-import urllib.request
-import xml.dom.minidom
-import binascii
 
 
 def __read_text_node(parent, tagname):

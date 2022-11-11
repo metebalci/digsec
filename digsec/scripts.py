@@ -1,3 +1,8 @@
+# pylint: disable=missing-function-docstring
+# pylint: disable=invalid-name
+"""
+handles main entry point
+"""
 import sys
 from digsec import enable_debug, dprint, DIGSEC_VERSION
 from digsec.help import display_help, display_help_query
@@ -8,6 +13,7 @@ from digsec.validate import do_validate
 from digsec.utils import has_flag
 
 
+# pylint: disable=too-many-branches
 def main():
     print('digsec v%s' % DIGSEC_VERSION)
     if has_flag('+debug'):
