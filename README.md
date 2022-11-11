@@ -30,6 +30,7 @@ ECDSAP384SHA384, RSA-512 and SHA-384 support is not tested. If you know a domain
   - tcp support with +tcp flag, default is udp
   - non-53 port support with @server_ip:server_port, default is 53
   - validate script is replaced with new scripts/validate.py
+  - rsa dependency updated to 4.9, ecdsa dependency updated to 0.18.0
 
 0.7.1:
   - rsa update in 0.7 broke the build, this version fixes the issue.

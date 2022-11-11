@@ -59,7 +59,6 @@ def make_query_message(qname,
 # pylint: disable=too-many-locals
 # pylint: disable=too-many-branches
 # pylint: disable=too-many-statements
-# TODO: can be improved
 def do_query(argv):
     non_plus_and_at = list(filter(lambda x: x[0] != '+', argv))
     non_plus = list(filter(lambda x: x[0] != '@', non_plus_and_at))
