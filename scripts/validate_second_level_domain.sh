@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 if [ "$#" -ne 4 ]; then
   echo "Usage: validate_second_level_domain.sh domain_name record_type dir_to_save_answers ns_server"
