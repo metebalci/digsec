@@ -4,7 +4,7 @@ import os
 import sys
 
 
-DIGSEC_VERSION = '0.7.2'
+DIGSEC_VERSION = '0.8.0'
 __DEBUG = False
 
 
