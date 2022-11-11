@@ -95,7 +95,7 @@ def do_query(argv):
                      'cd': False,
                      'do': False,
                      'udp_payload_size': None,
-                     'timeout': 1.0,
+                     'timeout': None,
                      'show-protocol': False,
                      'save-answer': False,
                      'save-answer-prefix': None,

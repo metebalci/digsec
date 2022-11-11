@@ -17,7 +17,8 @@ def send_recv(req, addr, port, timeout):
     sock.bind(('', 4242))  # 4242 just a random port number
     sock.sendto(req, sendaddress)
     try:
-        sock.settimeout(timeout)
+        if timeout is not None:
+            sock.settimeout(timeout)
         (res, resaddress) = sock.recvfrom(4096)
         dprint('Received %d bytes from %s' % (len(res), resaddress))
         dprint('0x%s' % binascii.hexlify(res).decode('ascii'))
