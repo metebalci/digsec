@@ -233,8 +233,8 @@ class DNSQuestionRR(namedtuple('DNSQuestionRR', ['qname',
         b.extend(pack('! H H', self.qtype, self.qclass))
         return b
 
-    # pylint: disable=no-self-use
-    def from_packet(self, packet, offset):
+    @staticmethod
+    def from_packet(packet, offset):
         (qname, offset) = decode_name(packet, offset)
         (qtype, qclass) = unpack('! H H', packet[offset:offset + 4])
         return DNSQuestionRR(qname,
@@ -1026,7 +1026,7 @@ class L2_RR_DS(namedtuple('L2_RR_DS', ['name',
 
 
 def decode_type_bitmaps(rdata, offset):
-    rr_types = list()
+    rr_types = []
     while offset < len(rdata):
         (window_block_number,
          bitmap_length) = unpack("! B B",

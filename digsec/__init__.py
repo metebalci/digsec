@@ -15,8 +15,6 @@ def enable_debug():
 
 
 def dprint(*args):
-    # pylint: disable=global-statement
-    global __DEBUG
     if __DEBUG:
         print('DEBUG: ', end='')
         print(*args)

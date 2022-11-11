@@ -40,7 +40,7 @@ def save_rrset(output_dir, filename_prefix, answer):
         else:
             rrs_per_type[rr.type_str].append(rr)
     dprint('save_answer_file keys: %s' % rrs_per_type.keys())
-    if 'RRSIG' in rrs_per_type.keys():
+    if 'RRSIG' in rrs_per_type:
         dprint('save_answer_file RRSIG keys: %s' %
                rrs_per_type['RRSIG'].keys())
     for k, v in rrs_per_type.items():

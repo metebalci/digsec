@@ -49,8 +49,8 @@ def do_download(argv):
     ds_anchors_filename = flags['save-ds-anchors']
     root_anchors_filename = flags['save-root-anchors']
     root_anchors_url = 'https://data.iana.org/root-anchors/root-anchors.xml'
-    r = urllib.request.urlopen(root_anchors_url)
-    b = r.read()
+    with urllib.request.urlopen(root_anchors_url) as r:
+        b = r.read()
     trust_anchors = __read_trust_anchor(b.decode('utf-8'))
     print('Trust-Anchor contains keytags: %s' %
           ', '.join(map(lambda k: '%s-%s' % (k[0], k[1]),
