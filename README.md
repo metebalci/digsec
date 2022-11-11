@@ -24,9 +24,11 @@ ECDSAP384SHA384, RSA-512 and SHA-384 support is not tested. If you know a domain
 
 # Release History
 
-0.7.2:
+0.8:
   - pylint added to build process, but only important and easy to fix errors are fixed.
   - default timeout value of 1s is removed. now it defaults to system default. if needed, it can be set with +timeout=X_in_seconds_float flag.
+  - tcp support with +tcp flag, default is udp
+  - non-53 port support with @server_ip:server_port, default is 53
 
 0.7.1:
   - rsa update in 0.7 broke the build, this version fixes the issue.

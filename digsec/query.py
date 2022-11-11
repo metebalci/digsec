@@ -136,9 +136,13 @@ def do_query(argv):
         if len(server_and_port) == 1:
             server = server_and_port[0]
             port = 53
+        else:
+            server = server_and_port[0]
+            port = int(server_and_port[1])
     else:
         server = '8.8.8.8'
         port = 53
+    dprint('server:port = %s:%d' % (server, port))
 
     dns_query = make_query_message(qname,
                                    qtype,
