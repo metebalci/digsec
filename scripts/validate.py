@@ -53,7 +53,7 @@ def main():
 
     print('saving _root.DS (trust anchor)')
     current_cmd = 'digsec download +save-ds-anchors=%s' % (
-        os.path.join(dest, '_root.IN.'))
+        os.path.join(dest, '_root.IN'))
     print(current_cmd)
     run(current_cmd)
 
