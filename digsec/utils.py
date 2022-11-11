@@ -264,6 +264,7 @@ def parse_flags(argv, default_flags):
             for f in ['rd',
                       'cd',
                       'do',
+                      'tcp',
                       'debug',
                       'help',
                       'save-answer',

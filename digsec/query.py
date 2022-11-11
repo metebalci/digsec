@@ -95,6 +95,7 @@ def do_query(argv):
                      'cd': False,
                      'do': False,
                      'udp_payload_size': None,
+                     'tcp': False,
                      'timeout': None,
                      'show-protocol': False,
                      'save-answer': False,
@@ -167,10 +168,10 @@ def do_query(argv):
 
     if show_protocol or show_friendly:
         print('<<< NETWORK COMMUNICATION >>>')
-        print('Server: %s:%d' % (server, port))
+        print('Server: %s:%s/%d' % (server, 'tcp' if flags['tcp'] else 'udp', port))
         print()
 
-    dns_response_packet = send_recv(dns_query_packet, server, port, flags['timeout'])
+    dns_response_packet = send_recv(dns_query_packet, server, port, flags['timeout'], flags['tcp'])
 
     if dns_response_packet is None:
         return
