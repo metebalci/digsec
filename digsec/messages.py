@@ -432,6 +432,7 @@ class DNSOptRR(namedtuple('DNSOptRR', ['udp_payload_size',
     def __repr__(self):
         return self.__str__()
 
+    # pylint: disable=no-self-use
     def l2(self):
         return None
 
