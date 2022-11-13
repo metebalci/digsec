@@ -2,7 +2,13 @@
 
 [![CircleCI](https://circleci.com/gh/metebalci/digsec/tree/master.svg?style=svg)](https://circleci.com/gh/metebalci/digsec/tree/master)
 
-dig like command line utility to understand DNSSEC.
+`digsec` is a standalone command line tool to be used for self-learning, teaching or troubleshooting DNSSEC. 
+
+It is a raw DNS tool, that does not implicitly add any DNS flags, or automatically perform multi-step operations like authenticating a DNSSEC record.
+
+`digsec` is not supposed to be embedded into another code e.g. it is not a library. At the moment, I do not plan to convert it to a library, so if you are trying to embed it to another code, I might not be able to help due to various needs that might arise.
+
+This is also true if it is used in a (bash) script. It might not be particularly script friendly, and I do not at the moment plan to make it as such. The script(s) under `scripts` folder is only meant to be used as indicated, they are not standalone tools. Basically, if you want to use `digsec` for a certain task, you have to write your own script using the `digsec` tool directly not the scripts.
 
 # Install
 
@@ -10,11 +16,11 @@ dig like command line utility to understand DNSSEC.
 
 # Usage
 
-Just run digsec to see options and help, or see this blog post https://metebalci.com/blog/a-minimum-complete-tutorial-of-dnssec/ .
+Just run digsec to see options, flags and help, or much better see [my blog post](https://metebalci.com/blog/a-minimum-complete-tutorial-of-dnssec/) explaining how it is used with DNSSEC.
 
 # Hints
 
-- digsec do not add DNS flags implicitly. You might need to use +rd (recursive desired) often.
+- digsec do not add DNS flags implicitly. You might need to use +rd (recursive desired) often. Also, if you are looking to invalid DNSSEC records, you might need to use +cd (checking disabled) flag, otherwise the DNS server may not return them.
 
 - see `scripts/validate.py` to see a full validation and run for example `scripts/validate.py metebalci.com A`.
 
@@ -78,8 +84,6 @@ OK RRSIG (A, ECDSAP256SHA256) with DNSKEY (34505, ECDSAP256SHA256)
 # Known Issues
 
 - `scripts/validate.py` does not work with 2+ level domains e.g. www.metebalci.com
-
-- some algorithms are not fully tested
 
 # Release History
 
