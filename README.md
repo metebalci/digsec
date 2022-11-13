@@ -110,6 +110,9 @@ OK RRSIG (A, ECDSAP256SHA256) with DNSKEY (34505, ECDSAP256SHA256)
 
 # Release History
 
+0.8.2:
+  - 
+
 0.8.1:
   - digsec download outputs signature and CA file for trust anchor verification
   - digsec download can use a local root anchors XML file rather than downloading it
