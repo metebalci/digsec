@@ -10,7 +10,7 @@ Technically, `digsec` is a validating, DNSSEC-aware resolver. However, it either
 
 DNSSEC Trust Anchors can be downloaded with `digsec`, and if required their validation can be done using openssl.
 
-# For Developers
+# Note to Developers
 
 `digsec` is not supposed to be embedded into another code e.g. it is not a library. At the moment, I do not plan to convert it to a library, so if you are trying to embed it to another code, I might not be able to help due to various needs that might arise.
 
