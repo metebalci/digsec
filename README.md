@@ -112,6 +112,7 @@ OK RRSIG (A, ECDSAP256SHA256) with DNSKEY (34505, ECDSAP256SHA256)
 
 0.8.1:
   - digsec download outputs signature and CA file for trust anchor verification
+  - digsec download can use a local root anchors XML file rather than downloading it
 
 0.8:
   - pylint added to build process, but only important and easy to fix errors are fixed.
