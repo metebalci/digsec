@@ -56,6 +56,7 @@ def display_help_query():
           +[no]do: set/reset DNSSEC OK bit in EDNS
           +udp_payload_size=<size>: set UDP payload size (in octets) in EDNS
           +timeout=<timeout>: set socket timeout in seconds (float), default is 1 seconds
+          +tcp: use tcp instead of udp, default is udp
           +[no]show-friendly: show query and response in friendly format
           +[no]show-protocol: show query and response in protocol format
           +save-answer: save the answer
@@ -68,6 +69,9 @@ def display_help_query():
     Default FLAGS are:
           if +save-answer is not specified, +show-friendly is implied.
           if server is not specified, Google Public DNS 8.8.8.8 is used at port 53.
+
+    non-53 ports:
+          @server can be given with a port number e.g. @8.8.8.8:54
 
     Notes:
     - +do requires +udp_payload_size=<size>
