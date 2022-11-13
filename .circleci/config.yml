@@ -6,7 +6,6 @@ jobs:
       - image: circleci/python:3.6
     steps:
       - checkout
-      - run: pip install pylint
       - run: pip install -e .
       - run: scripts/validate.py . DNSKEY
       - run: scripts/validate.py com DNSKEY
@@ -19,5 +18,10 @@ jobs:
     steps:
       - checkout
       - run: pip install pylint
-      - run: pip install -e .
       - run: pylint digsec/*.py --disable=fixme --disable=consider-using-f-string
+
+workflows:
+  build_and_pylint:
+    jobs:
+      - build
+      - pylint
