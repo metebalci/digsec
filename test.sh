@@ -1,17 +1,36 @@
 #!/bin/bash
 
-set -e
-
 EXE=scripts/validate.py
 
 function do_test
 {
-	rm -rf $1
-	mkdir $1
-	scripts/validate.py $2 $3 $1
+  q=$1
+  rr=$2
+	rm -rf /tmp/digsec
+	mkdir /tmp/digsec
+	scripts/validate.py $q $rr /tmp/digsec
+  if [ $? -ne 0 ] 
+  then
+    exit 1
+  fi
 }
 
-do_test /tmp/digsec . DNSKEY
-do_test /tmp/digsec com DNSKEY
-do_test /tmp/digsec metebalci.com DNSKEY
-do_test /tmp/digsec metebalci.com A DNSKEY
+function do_ftest
+{
+  q=$1
+  rr=$2
+	rm -rf /tmp/digsec
+	mkdir /tmp/digsec
+	scripts/validate.py $q $rr /tmp/digsec
+  if [ $? -eq 0 ] 
+  then 
+    exit 1
+  fi
+}
+
+do_test . DNSKEY
+do_test com DNSKEY
+do_test metebalci.com DNSKEY
+do_test metebalci.com A DNSKEY
+
+do_ftest dnssec-failed.org DNSKEY
