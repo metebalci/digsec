@@ -7,9 +7,6 @@ jobs:
     steps:
       - checkout
       - run: pip install -e .
-      - run: scripts/validate.py . DNSKEY /tmp
-      - run: scripts/validate.py com DNSKEY /tmp
-      - run: scripts/validate.py metebalci.com DNSKEY /tmp
-      - run: scripts/validate.py metebalci.com A /tmp
+      - run: ./test.sh
       - run: pip install pylint
       - run: pylint digsec/*.py
