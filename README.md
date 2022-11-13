@@ -6,6 +6,10 @@
 
 It is a raw DNS tool, that does not implicitly add any DNS flags, or automatically perform multi-step operations like authenticating a DNSSEC record.
 
+Technically, `digsec` is a validating, DNSSEC-aware resolver. However, it either does query (in other words lookup) or validate (in other words authenticate) at each run. With `query`, only a single DNS lookup is performed (e.g. lookup a DNSKEY record of a domain). With `validate`, only a single validation is performed (e.g. validate an A record with a DNSKEY record). Typically, for a DNSSEC validating query, `digsec` would have to be executed multiple times. `query` run naturally requires network communication, whereas `validate` run is off-line. To be able to run validation, the answers to queries can be saved to temporary files.
+
+# For Developers
+
 `digsec` is not supposed to be embedded into another code e.g. it is not a library. At the moment, I do not plan to convert it to a library, so if you are trying to embed it to another code, I might not be able to help due to various needs that might arise.
 
 This is also true if it is used in a (bash) script. It might not be particularly script friendly, and I do not at the moment plan to make it as such. The script(s) under `scripts` folder is only meant to be used as indicated, they are not standalone tools. Basically, if you want to use `digsec` for a certain task, you have to write your own script using the `digsec` tool directly not the scripts.
