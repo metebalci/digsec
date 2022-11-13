@@ -184,10 +184,10 @@ def do_validate(argv):
                           'RRSIG.labels')
 
         if now < rrsig.signature_inception:
-            error('RRSIG is not valid yet')
+            error('RRSIG is not valid yet (now < signature inception)')
 
         if now > rrsig.signature_expiration:
-            error('RRSIG is not valid anymore')
+            error('RRSIG is not valid anymore (now > signature expiration)')
 
         use_ds = False
         if rrsig.type_covered == 'DNSKEY':
