@@ -105,5 +105,5 @@ def do_download(argv):
             if is_remote:
                 with open(root_anchors_filename + ".p7s", "wb") as f:
                     f.write(trust_anchors_xml_signature)
-                with open(root_anchors_filename + ".ca", "wt") as f:
+                with open(root_anchors_filename + ".ca", "wt", encoding='ascii') as f:
                     f.write(ICANN_ROOT_CA_CERT)
