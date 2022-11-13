@@ -17,6 +17,7 @@ jobs:
       - image: circleci/python:3.8
     steps:
       - checkout
+      - run: pip install -e .
       - run: pip install pylint
       - run: pylint digsec/*.py --disable=fixme --disable=consider-using-f-string
 
