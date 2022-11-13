@@ -8,8 +8,16 @@ jobs:
       - checkout
       - run: pip install pylint
       - run: pip install -e .
-      - run: pylint digsec/*.py --disable=fixme --disable=consider-using-f-string
       - run: scripts/validate.py . DNSKEY
       - run: scripts/validate.py com DNSKEY
       - run: scripts/validate.py metebalci.com DNSKEY
       - run: scripts/validate.py metebalci.com A
+
+  pylint:
+    docker:
+      - image: circleci/python:3.6
+    steps:
+      - checkout
+      - run: pip install pylint
+      - run: pip install -e .
+      - run: pylint digsec/*.py --disable=fixme --disable=consider-using-f-string
