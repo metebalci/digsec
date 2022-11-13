@@ -1,3 +1,4 @@
+# coding: utf-8
 # pylint: disable=missing-function-docstring
 """
 handles network/socket communication with DNS servers

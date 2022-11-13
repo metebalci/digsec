@@ -1,7 +1,8 @@
+# coding: utf-8
 # pylint: disable=missing-function-docstring
 # pylint: disable=invalid-name
 """
-helpers to use algorithms
+helpers for using algorithms
 """
 import hashlib
 import rsa

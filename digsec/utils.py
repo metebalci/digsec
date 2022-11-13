@@ -1,3 +1,4 @@
+# coding: utf-8
 # pylint: disable=missing-function-docstring
 # pylint: disable=invalid-name
 """

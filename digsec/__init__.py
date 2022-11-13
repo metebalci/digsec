@@ -1,3 +1,4 @@
+# coding: utf-8
 # pylint: disable=missing-module-docstring
 # pylint: disable=missing-function-docstring
 import os
