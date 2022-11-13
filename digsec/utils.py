@@ -231,6 +231,13 @@ def parse_flags(argv, default_flags):
 
             if set_eq_flag(flags,
                            flag,
+                           'root-anchors-location',
+                           'https://data.iana.org/root-anchors/',
+                           str):
+                continue
+
+            if set_eq_flag(flags,
+                           flag,
                            'save-ds-anchors',
                            '_root.IN',
                            str):

@@ -13,9 +13,6 @@ from digsec.utils import parse_flags, dprint
 from digsec.messages import L2_RR_DS
 from digsec.utils import dnssec_algorithm_to_str, dnssec_digest_type_to_str
 
-URL_ROOT_ANCHORS_XML = "https://data.iana.org/root-anchors/root-anchors.xml"
-URL_ROOT_ANCHORS_SIGNATURE = "https://data.iana.org/root-anchors/root-anchors.p7s"
-
 # using an embedded CA cert eliminates any potential issue with HTTPS
 # extracted from root-anchors.p7s file
 # exported as base-64 encoded X.509
@@ -73,17 +70,25 @@ def __read_trust_anchor(s):
 
 def do_download(argv):
     default_flags = {'save-ds-anchors': None,
-                     'save-root-anchors': None}
+                     'save-root-anchors': None,
+                     'root-anchors-location': 'https://data.iana.org/root-anchors'}
     flags = parse_flags(argv, default_flags)
     dprint(flags)
     ds_anchors_filename = flags['save-ds-anchors']
     root_anchors_filename = flags['save-root-anchors']
-    with urllib.request.urlopen(URL_ROOT_ANCHORS_XML) as r:
-        trust_anchors_xml = r.read()
+    root_anchors_location = flags['root-anchors-location']
+    is_remote = root_anchors_location.startswith('http')
+    if is_remote:
+        with urllib.request.urlopen(root_anchors_location + '/root-anchors.xml') as r:
+            trust_anchors_xml = r.read()
+    else:
+        with open(root_anchors_location, 'rb') as r:
+            trust_anchors_xml = r.read()
     trust_anchors = __read_trust_anchor(trust_anchors_xml.decode('utf-8'))
     if root_anchors_filename is not None:
-        with urllib.request.urlopen(URL_ROOT_ANCHORS_SIGNATURE) as r:
-            trust_anchors_xml_signature = r.read()
+        if is_remote:
+            with urllib.request.urlopen(root_anchors_location + "/root-anchors.p7s") as r:
+                trust_anchors_xml_signature = r.read()
     print('Trust-Anchor contains keytags: %s' %
           ', '.join(map(lambda k: '%s-%s' % (k[0], k[1]),
                         trust_anchors)))
@@ -97,7 +102,8 @@ def do_download(argv):
         if root_anchors_filename:
             with open(root_anchors_filename, "wb") as f:
                 f.write(trust_anchors_xml)
-            with open(root_anchors_filename + ".p7s", "wb") as f:
-                f.write(trust_anchors_xml_signature)
-            with open(root_anchors_filename + ".ca", "wt") as f:
-                f.write(ICANN_ROOT_CA_CERT)
+            if is_remote:
+                with open(root_anchors_filename + ".p7s", "wb") as f:
+                    f.write(trust_anchors_xml_signature)
+                with open(root_anchors_filename + ".ca", "wt") as f:
+                    f.write(ICANN_ROOT_CA_CERT)

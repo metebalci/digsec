@@ -99,22 +99,28 @@ def display_help_download():
 
     FLAGS are:
           [+save-root-anchors=[<filename>]]: save downloaded DNSSEC trust anchors (XML) file
+          [+root-anchors-location=[url-or-filepath]]: http/https or filepath of DNSSEC trust anchors
           [+save-ds-anchors=[<filename_prefix>]]: save trust anchor for validate
           +help: show this help
           +debug: enable debug mode
 
     Default FLAGS are:
-          (none)
+          +root-anchors-location=https://data.iana.org/root-anchors
 
     Notes:
         Default filename for +save-root-anchors is root-anchors.xml
-        Default filename for +save-ds-anchors is _root.IN.DS
-        DNSSEC trust anchors is https://data.iana.org/root-anchors/root-anchors.xml
+        Default filename prefix for +save-ds-anchors is _root.IN
         +save-ds-anchors implicitly appends .DS suffix
-        If +save-root-anchors is specified, in addition to root-anchors:
-          - detached CMS signature (also downloaded) of root-anchors XML file
+        +root-anchors-location can be set to a remote http/https location or local filepath
+        If http/https is given as root-anchors-location:
+         - the remote root-anchors file should be called root-anchors.xml
+         - the remote signature file should be called root-anchors.p7s
+        If local filepath is given as root-anchors-location, it should point to a root anchors XML file.
+        If +save-root-anchors is specified and +root-anchors-location is http/https URL,
+          in addition to root-anchors:
+          - detached CMS signature (also downloaded) of root-anchors XML file (root-anchors.p7s)
           - ICANN CA file (embedded in the code) the signature is chained to
-          is also saved with .p7s and .ca suffixes. These two files:
+          is also saved as <root-anchors-filename>.p7s and <root-anchors-filename>.ca. These two files:
           can be used to verify root-anchors XML file (RFC 7958) with openssl:
           openssl smime -verify -CAfile root-anchors.xml.ca -inform der -in root-anchors.xml.p7s -content root-anchors.xml
           This verification is not done by digsec, it should be done externally.
