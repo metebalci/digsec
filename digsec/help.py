@@ -18,7 +18,8 @@ def display_help():
 
     command can be:
     - query: perform a DNSSEC query
-    - download: download and save official trust anchors (from IANA)
+    - download: download and save trust anchors (from IANA) (DEPRECATED)
+    - root-anchors: download or use trust anchors XML and generate DS RRset
     - validate: validate DNSSEC records saved by query
 
     Potential use cases:
@@ -27,7 +28,8 @@ def display_help():
     - Run and observe DNSSEC validation process
 
     Recommendation for first use:
-    - run download to save DS trust anchors
+    - (optional) use DNSSEC Trust Anchor Fetcher to download DNSSEC trust anchor
+    - run root-anchors to save DS trust anchors
     - run query for any domain you want (e.g. www.metebalci.com)
     - run validate when you want, but you need to run query first for
       parent domains for a proper authentication chain
@@ -96,8 +98,8 @@ def display_help_download():
     digsec download <flags>
 
     FLAGS are:
-          [+save-root-anchors=[<filename>]]: save downloaded root anchor file
-          [+save-ds-anchors=[<filename_prefix>]]: save trust anchor for validate, .DS suffix is added automatically
+          [+save-root-anchors=[<filename>]]: save downloaded DNSSEC trust anchors (XML) file
+          [+save-ds-anchors=[<filename_prefix>]]: save trust anchor for validate
           +help: show this help
           +debug: enable debug mode
 
@@ -107,7 +109,15 @@ def display_help_download():
     Notes:
         Default filename for +save-root-anchors is root-anchors.xml
         Default filename for +save-ds-anchors is _root.IN.DS
-        root anchor file is https://data.iana.org/root-anchors/root-anchors.xml
+        DNSSEC trust anchors is https://data.iana.org/root-anchors/root-anchors.xml
+        +save-ds-anchors implicitly appends .DS suffix
+        If +save-root-anchors is specified, in addition to root-anchors:
+          - detached CMS signature (also downloaded) of root-anchors XML file
+          - ICANN CA file (embedded in the code) the signature is chained to
+          is also saved with .p7s and .ca suffixes. These two files:
+          can be used to verify root-anchors XML file (RFC 7958) with openssl:
+          openssl smime -verify -CAfile root-anchors.xml.ca -inform der -in root-anchors.xml.p7s -content root-anchors.xml
+          This verification is not done by digsec, it should be done externally.
     ''')
     sys.exit(1)
 

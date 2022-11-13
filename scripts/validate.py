@@ -14,6 +14,7 @@ import sys
 
 
 def print_help():
+    print('Usage: validate.py <domain> <rr> <dest_folder> <server>')
     sys.exit(1)
 
 
@@ -45,17 +46,28 @@ def main():
         rr = sys.argv[2]
     if len(sys.argv) >= 4:
         dest = sys.argv[3]
-    if len(sys.argv) >= 5 or len(sys.argv) <= 1:
+    if len(sys.argv) >= 5:
+        server = sys.argv[4]
+    if len(sys.argv) >= 6 or len(sys.argv) <= 1:
         print_help()
     qparts = q.split('.')
 
-    print('--- querying ---')
-
     print('saving _root.DS (trust anchor)')
-    current_cmd = 'digsec download +save-ds-anchors=%s' % (
-        os.path.join(dest, '_root.IN'))
+    current_cmd = 'digsec download +save-root-anchors=%s ' \
+        '+save-ds-anchors=%s' % (os.path.join(dest, 'root-anchors.xml'),
+                                 os.path.join(dest, '_root.IN'))
     print(current_cmd)
     run(current_cmd)
+
+    print('validating trust anchor')
+    current_cmd = 'openssl smime -verify -CAfile %s -inform der -in %s ' \
+        '-content %s' % (os.path.join(dest, 'root-anchors.xml.ca'),
+                         os.path.join(dest, 'root-anchors.xml.p7s'),
+                         os.path.join(dest, 'root-anchors.xml'))
+    print(current_cmd)
+    run(current_cmd)
+
+    print('--- querying ---')
 
     print('saving _root.DNSKEY')
     current_cmd = query_cmd(server, '.', 'DNSKEY', dest)
