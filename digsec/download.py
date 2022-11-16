@@ -8,7 +8,7 @@ import os
 import urllib.request
 import xml.dom.minidom
 import binascii
-from digsec.answer import save_rrset
+from digsec.answer import save_section
 from digsec.utils import parse_flags, dprint
 from digsec.messages import L2_RR_DS
 from digsec.utils import dnssec_algorithm_to_str, dnssec_digest_type_to_str
@@ -96,9 +96,9 @@ def do_download(argv):
         print('Use +save flags to actually save the anchors')
     else:
         if ds_anchors_filename:
-            save_rrset(os.getcwd(),
-                       ds_anchors_filename,
-                       map(lambda x: x[2], trust_anchors))
+            save_section(os.getcwd(),
+                         ds_anchors_filename,
+                         map(lambda x: x[2], trust_anchors))
         if root_anchors_filename:
             with open(root_anchors_filename, "wb") as f:
                 f.write(trust_anchors_xml)

@@ -10,7 +10,7 @@ from digsec.messages import DNSQuestionRR, DNSOptRR
 from digsec.utils import dprint, error, parse_flags
 from digsec.utils import random_dns_message_id
 from digsec.utils import dns_type_to_int, dns_class_to_int
-from digsec.answer import save_rrset
+from digsec.answer import save_section
 from digsec.help import display_help_query
 from digsec.comm import send_recv
 
@@ -198,9 +198,9 @@ def do_query(argv):
                                        qclass)
         dprint('save_answer_dir: %s, filename_prefix: %s' % (save_answer_dir,
                                                              filename_prefix))
-        save_rrset(save_answer_dir,
-                   filename_prefix,
-                   dns_response_message.answer)
+        save_section(save_answer_dir,
+                     filename_prefix,
+                     dns_response_message.answer)
 
     if show_friendly:
         print('<<< Friendly Response >>>')

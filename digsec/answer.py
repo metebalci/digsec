@@ -25,9 +25,9 @@ def write_answer_file(filepath, rrlist):
     dprint('write finished')
 
 
-def save_rrset(output_dir, filename_prefix, answer):
+def save_section(output_dir, filename_prefix, section):
     rrs_per_type = {}
-    for rr in answer:
+    for rr in section:
         if rr.type_str not in rrs_per_type:
             if rr.type_str == 'RRSIG':
                 rrs_per_type[rr.type_str] = {}
