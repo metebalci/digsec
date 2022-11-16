@@ -12,6 +12,7 @@ from collections import namedtuple
 from datetime import datetime
 from struct import pack, unpack
 from digsec import dprint
+from digsec.utils import format_ipv6_addr
 from digsec.utils import l2s, dns_class_to_int, dns_type_to_int
 from digsec.utils import dns_opcode_to_str, dns_rcode_to_str
 from digsec.utils import dns_class_to_str, dns_type_to_str
@@ -325,6 +326,7 @@ class DNSRR(namedtuple('DNSRR', ['name',
     def l2(self):
         m = {}
         m['A'] = L2_RR_A
+        m['AAAA'] = L2_RR_AAAA
         m['TXT'] = L2_RR_TXT
         m['NS'] = L2_RR_NS
         m['SOA'] = L2_RR_SOA
@@ -626,6 +628,70 @@ class L2_RR_A(namedtuple('L2_RR_A', ['name',
                                    self.clas,
                                    self.typ,
                                    self.address)
+
+
+class L2_RR_AAAA(namedtuple('L2_RR_AAAA', ['name',
+                                           'clas',
+                                           'ttl',
+                                           'address'])):
+
+    __slots__ = ()
+
+    @property
+    def typ(self):
+        return 'AAAA'
+
+    # RFC 4034 Section 6.2
+    def canonical_l1(self, ttl):
+        rdata = bytearray()
+        for part in self.address.split(':'):
+            first = part[0:2]
+            second = part[2:4]
+            rdata.append(int(first, 16))
+            rdata.append(int(second, 16))
+        return DNSRR(self.name.lower(),
+                     dns_type_to_int(self.typ),
+                     dns_class_to_int('IN'),
+                     ttl,
+                     4,
+                     rdata,
+                     None,
+                     None)
+
+    @staticmethod
+    def from_rr(rr):
+        address = '%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x' \
+            ':%02x%02x:%02x%02x:%02x%02x' % (
+            rr.rdata[0],
+            rr.rdata[1],
+            rr.rdata[2],
+            rr.rdata[3],
+            rr.rdata[4],
+            rr.rdata[5],
+            rr.rdata[6],
+            rr.rdata[7],
+            rr.rdata[8],
+            rr.rdata[9],
+            rr.rdata[10],
+            rr.rdata[11],
+            rr.rdata[12],
+            rr.rdata[13],
+            rr.rdata[14],
+            rr.rdata[15])
+        return L2_RR_AAAA(rr.name,
+                          dns_class_to_str(rr.clas),
+                          rr.ttl,
+                          address)
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __str__(self):
+                return '%s %d %s %s %s' % (self.name,
+                                           self.ttl,
+                                           self.clas,
+                                           self.typ,
+                                           format_ipv6_addr(self.address))
 
 
 class L2_RR_TXT(namedtuple('L2_RR_TXT', ['name',

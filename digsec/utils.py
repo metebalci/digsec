@@ -25,6 +25,23 @@ def l2s(l):
     return '\n'.join(str(x) for x in l)
 
 
+def format_ipv6_addr(addr_with_zeroes):
+    fa = ''
+    last_colon = False
+    for c in addr_with_zeroes.split(':'):
+        if c == '0000':
+            if last_colon:
+                pass
+            else:
+                last_colon = True
+                fa = fa + ':'
+        else:
+            if len(fa) > 0:
+                fa = fa + ':'
+            fa = fa + c
+    return fa
+
+
 # RFC 4034
 # this implementation is on purpose similar to a C code in
 # RFC 4034 Appendix B Key Tag Calculation
