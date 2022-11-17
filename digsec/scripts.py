@@ -8,9 +8,11 @@ import sys
 from digsec import enable_debug, dprint, DIGSEC_VERSION
 from digsec.help import display_help, display_help_query
 from digsec.help import display_help_validate, display_help_download
+from digsec.help import display_help_view
 from digsec.query import do_query
 from digsec.download import do_download
 from digsec.validate import do_validate
+from digsec.view import do_view
 from digsec.utils import has_flag
 
 
@@ -41,5 +43,10 @@ def main():
                 display_help_validate()
             else:
                 do_validate(sys.argv[2:])
+        elif cmd == 'view':
+            if show_help:
+                display_help_view()
+            else:
+                do_view(sys.argv[2:])
         else:
             display_help()

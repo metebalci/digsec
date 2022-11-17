@@ -152,3 +152,18 @@ def display_help_validate():
           (none)
     ''')
     sys.exit(1)
+
+
+def display_help_view():
+    display_help_header()
+    print('''
+    digsec view an.rrset <flags>
+
+    FLAGS are:
+          +help: show this help
+          +debug: enable debug mode
+
+    Default FLAGS are:
+          (none)
+    ''')
+    sys.exit(1)
