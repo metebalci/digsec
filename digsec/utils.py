@@ -6,7 +6,7 @@ various utility functions
 """
 import random
 import sys
-from digsec import dprint, error
+from digsec import dprint, error, DigsecError
 from digsec.constants import DNS_CLASS_TO_INT, DNS_TYPE_TO_INT
 from digsec.constants import DNS_CLASS_TO_STR, DNS_TYPE_TO_STR
 from digsec.constants import DNS_OPCODE_TO_INT, DNS_RCODE_TO_INT
@@ -305,3 +305,40 @@ def parse_flags(argv, default_flags):
             if not found:
                 error('Flag %s unknown.' % flag)
     return flags
+
+
+def get_dnskeys(dnskey_rrset, keytag, algorithm, name):
+
+    dnskeys = list(filter(lambda x: x.keytag == keytag,
+                          dnskey_rrset))
+    if len(dnskeys) == 0:
+        raise DigsecError('No DNSKEY with keytag: %s' % keytag)
+
+    dnskeys = list(filter(lambda x: x.algorithm == algorithm,
+                          dnskeys))
+
+    if len(dnskeys) == 0:
+        raise DigsecError('No DNSKEY with keytag: %s, algorithm: %d' % (
+            keytag,
+            algorithm))
+
+    dnskeys = list(filter(lambda x: x.name == name,
+                          dnskeys))
+
+    if len(dnskeys) == 0:
+        raise DigsecError('No DNSKEY with keytag: %s, algorithm: %d, ' \
+                          'name: %s' % (
+                              keytag,
+                              algorithm,
+                              name))
+
+    dnskeys = list(filter(lambda x: x.zone_key, dnskeys))
+
+    if len(dnskeys) == 0:
+        raise DigsecError('DNSKEY with keytag: %s, algorithm: %d, ' \
+                          'name: %s is not a ZSK' % (
+                              keytag,
+                              algorithm,
+                              name))
+
+    return dnskeys
