@@ -29,3 +29,10 @@ def error(msg):
 def ensure_file_exists(filename):
     if not os.path.isfile(filename):
         error('file does not exist: %s' % filename)
+
+
+class DigsecError(Exception):
+    """Errors"""
+
+    def __init__(self, msg=None):
+        self.msg = msg
