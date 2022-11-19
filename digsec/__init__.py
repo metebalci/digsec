@@ -35,4 +35,5 @@ class DigsecError(Exception):
     """Errors"""
 
     def __init__(self, msg=None):
+        super().__init__()
         self.msg = msg
