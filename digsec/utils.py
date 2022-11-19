@@ -77,9 +77,15 @@ def decode_labels(p, offset):
     qnameparts = []
     while True:
         qnamepartlen = p[i]
+        dprint('qnamepartlen: %d' % qnamepartlen)
         i = i + 1
         if qnamepartlen == 0:
             # termination
+            # it might look like it may be OK to not add empty label here
+            # and do not use len(qnameparts)-1 in validate
+            # but it causes an error if presentation format is read
+            # because names are given with root (dots)
+            qnameparts.append('')
             break
         if qnamepartlen & 0b11000000 == 0:
             # no message compression
@@ -87,6 +93,7 @@ def decode_labels(p, offset):
             qnamepart = p[i:i + qnamepartlen]
             i = i + qnamepartlen
             label = qnamepart.decode('ascii')
+            dprint('label: %s' % label)
             qnameparts.append(label)
         elif qnamepartlen & 0b11000000 == 0b11000000:
             # message compression
@@ -95,7 +102,7 @@ def decode_labels(p, offset):
             pointer = ((qnamepartlen & 0b00111111) << 8) | p[i]
             i = i + 1
             (pointedlabels, _pointedoffset) = decode_labels(p, pointer)
-            dprint('decoded labels: %s' % pointedlabels)
+            dprint('pointed labels: %s' % pointedlabels)
             # pointed part can be full or partial
             qnameparts.extend(pointedlabels)
             # pointed part can be only the last, so
@@ -105,7 +112,7 @@ def decode_labels(p, offset):
             assert False, "invalid qnamepartlen: 0x%x" % qnamepartlen
     return (qnameparts, i)
 
-
+# banme
 def decode_name(p, offset):
     (labels, newoffset) = decode_labels(p, offset)
     return ('.'.join(labels), newoffset)
@@ -113,11 +120,9 @@ def decode_name(p, offset):
 
 def encode_name(name):
     b = bytearray()
-    if len(name) > 0:
-        for label in name.split("."):
-            b.append(len(label))
-            b.extend(label.encode('ascii'))
-    b.append(0)
+    for label in name.split("."):
+        b.append(len(label))
+        b.extend(label.encode('ascii'))
     return b
 
 
@@ -326,7 +331,7 @@ def get_dnskeys(dnskey_rrset, keytag, algorithm, name):
                           dnskeys))
 
     if len(dnskeys) == 0:
-        raise DigsecError('No DNSKEY with keytag: %s, algorithm: %d, ' \
+        raise DigsecError('No DNSKEY with keytag: %s, algorithm: %s, ' \
                           'name: %s' % (
                               keytag,
                               algorithm,

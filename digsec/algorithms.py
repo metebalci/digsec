@@ -7,6 +7,16 @@ helpers for using algorithms
 import hashlib
 import rsa
 from ecdsa import VerifyingKey, NIST256p, NIST384p, BadSignatureError
+from ecpy.curves import Curve, Point
+from ecpy.keys import ECPublicKey
+from ecpy.ecdsa import ECDSA
+from digsec import DigsecError
+
+
+def get_algorithm(algorithm_no):
+    algo = dnssec_algorithms.get(algorithm_no, None)
+    if algo is None:
+        raise DigsecError('algorithm: %d is not supported' % algorithm_no)
 
 
 def hash_common(m, data, digest):
@@ -78,12 +88,34 @@ def ecdsap384sha384(data, signature, dnskey):
         return False
 
 
+# signature is 64-octet
+def ed25519(data, signature, dnskey):
+    (sign_of_x, y) = dnskey.ed25519_curve_point()
+    curve = Curve.get_curve('Ed25519')
+    x = curve.x_recover(y, sign_of_x)
+    pubkey = ECPublicKey(Point(x, y, curve, True))
+    signer = ECDSA()
+    return signer.verify(data, signature, pubkey)
+
+
+# signature is 114-octet
+def ed448(data, signature, dnskey):
+    (sign_of_x, y) = dnskey.ed448_curve_point()
+    curve = Curve.get_curve('Ed448')
+    x = curve.x_recover(y, sign_of_x)
+    pubkey = ECPublicKey(Point(x, y, curve, True))
+    signer = ECDSA()
+    return signer.verify(data, signature, pubkey)
+
+
 dnssec_algorithms = {}
 dnssec_algorithms['RSASHA1'] = rsasha1
 dnssec_algorithms['RSASHA256'] = rsasha256
 dnssec_algorithms['RSASHA512'] = rsasha512
 dnssec_algorithms['ECDSAP256SHA256'] = ecdsap256sha256
 dnssec_algorithms['ECDSAP384SHA256'] = ecdsap384sha384
+dnssec_algorithms['ED25519'] = ed25519
+dnssec_algorithms['ED448'] = ed448
 
 
 dnssec_digests = {}

@@ -11,7 +11,7 @@ import binascii
 from collections import namedtuple
 from datetime import datetime
 from struct import pack, unpack
-from digsec import dprint
+from digsec import dprint, DigsecError
 from digsec.utils import format_ipv6_addr
 from digsec.utils import l2s, dns_class_to_int, dns_type_to_int
 from digsec.utils import dns_opcode_to_str, dns_rcode_to_str
@@ -309,6 +309,40 @@ class DNSRR(namedtuple('DNSRR', ['name',
                       offset + 10),
                 offset + 10 + rdlength)
 
+    @staticmethod
+    def from_presentation(p):
+        pa = []
+        # in case presentation contains \n or \r remote them first
+        # remove empty parts/spaces
+        # also remove paranthesis, not needed for reading
+        for part in (p
+                     .replace('\n', '')
+                     .replace('\r', '')
+                     .replace('(', '')
+                     .replace(')', '')
+                     .split(' ')
+                     ):
+            if part == '':
+                pass
+            elif part == ' ':
+                pass
+            else:
+                pa.append(part)
+        name = pa[0]
+        ttl = int(pa[1])
+        clas = pa[2]
+        typ = pa[3]
+        if typ == 'DNSKEY':
+            return L2_RR_DNSKEY.from_presentation(name, ttl, clas, pa[4:])
+        elif typ == 'DS':
+            return L2_RR_DS.from_presentation(name, ttl, clas, pa[4:])
+        elif typ == 'RRSIG':
+            return L2_RR_RRSIG.from_presentation(name, ttl, clas, pa[4:])
+        elif typ == 'MX':
+            return L2_RR_MX.from_presentation(name, ttl, clas, pa[4:])
+        else:
+            return DigsecError('RR type: %s not supported to read from presentation' % typ)
+
     def __str__(self):
         return '%s %d(%s) %d(%s) %d %d 0x%s' % (self.name,
                                                 self.typ,
@@ -327,6 +361,7 @@ class DNSRR(namedtuple('DNSRR', ['name',
         m = {}
         m['A'] = L2_RR_A
         m['AAAA'] = L2_RR_AAAA
+        m['MX'] = L2_RR_MX
         m['TXT'] = L2_RR_TXT
         m['NS'] = L2_RR_NS
         m['SOA'] = L2_RR_SOA
@@ -687,11 +722,11 @@ class L2_RR_AAAA(namedtuple('L2_RR_AAAA', ['name',
         return self.__str__()
 
     def __str__(self):
-                return '%s %d %s %s %s' % (self.name,
-                                           self.ttl,
-                                           self.clas,
-                                           self.typ,
-                                           format_ipv6_addr(self.address))
+        return '%s %d %s %s %s' % (self.name,
+                                   self.ttl,
+                                   self.clas,
+                                   self.typ,
+                                   format_ipv6_addr(self.address))
 
 
 class L2_RR_TXT(namedtuple('L2_RR_TXT', ['name',
@@ -890,6 +925,28 @@ class L2_RR_DNSKEY(namedtuple('L2_RR_DNSKEY', ['name',
                      None,
                      None)
 
+    # RFC 4034 Section 2.2
+    @staticmethod
+    def from_presentation(name, ttl, clas, pa):
+        flags = int(pa[0])
+        protocol = int(pa[1])
+        algorithm = int(pa[2])
+        public_key = ''.join(pa[3:])
+        public_key = base64.b64decode(public_key)
+        rdata = bytearray()
+        rdata.extend(pack('! H B B',
+                          flags,
+                          protocol,
+                          algorithm))
+        rdata.extend(public_key)
+        rr = DNSRR(name,
+                   dns_type_to_int('DNSKEY'),
+                   dns_class_to_int(clas),
+                   ttl,
+                   len(rdata),
+                   rdata, 0, 0)
+        return L2_RR_DNSKEY.from_rr(rr)
+
     @staticmethod
     def from_rr(rr):
         digest_data = bytearray()
@@ -974,6 +1031,24 @@ class L2_RR_DNSKEY(namedtuple('L2_RR_DNSKEY', ['name',
         q_uncompressed_bytes = self.public_key
         return q_uncompressed_bytes
 
+    # RFC 8080, 8032
+    # 32-octet public key
+    def ed25519_curve_point(self):
+        y = self.public_key
+        sign_of_x = 0 if ((y[31] & 0x80) == 0) else 1
+        y[31] = y[31] & 0x7F
+        y = int.from_bytes(y, byteorder='little')
+        return (sign_of_x, y)
+
+    # RFC 8080
+    # 57-octet public key
+    def ed448_curve_point(self):
+        y = self.public_key
+        sign_of_x = 0 if ((y[56] & 0x80) == 0) else 1
+        y[56] = y[56] & 0x7F
+        y = int.from_bytes(y, byteorder='little')
+        return (sign_of_x, y)
+
 
 class L2_RR_RRSIG(namedtuple('L2_RR_RRSIG', ['name',
                                              'clas',
@@ -994,6 +1069,58 @@ class L2_RR_RRSIG(namedtuple('L2_RR_RRSIG', ['name',
     @property
     def typ(self):
         return 'RRSIG'
+
+    # RFC 4034 Section 3.2
+    @staticmethod
+    def from_presentation(name, ttl, clas, pa):
+        type_covered = pa[0]
+        algorithm = int(pa[1])
+        labels = int(pa[2])
+        original_ttl = int(pa[3])
+        signature_expiration = pa[4]
+        if len(signature_expiration) == 14:
+            signature_expiration = int(datetime
+                                       .strptime(signature_expiration,
+                                                 '%Y%m%d%H%M%S')
+                                       .timestamp())
+        elif len(signature_expiration) <= 10:
+            signature_expiration = int(signature_expiration)
+        else:
+            raise DigsecError('ERROR: cannot decode signature expiration in ' \
+                              'presentation: %s' % pa[4])
+        signature_inception = pa[5]
+        if len(signature_inception) == 14:
+            signature_inception = int(datetime
+                                      .strptime(signature_inception,
+                                                '%Y%m%d%H%M%S')
+                                      .timestamp())
+        elif len(signature_inception) <= 10:
+            signature_inception = int(signature_inception)
+        else:
+            raise DigsecError('ERROR: cannot decode signature inception in ' \
+                              'presentation: %s' % pa[5])
+        keytag = int(pa[6])
+        signers_name = pa[7]
+        signature = ''.join(pa[8:])
+        signature = base64.b64decode(signature)
+        rdata = bytearray()
+        rdata.extend(pack('! H B B I I I H',
+                          dns_type_to_int(type_covered),
+                          algorithm,
+                          labels,
+                          original_ttl,
+                          signature_expiration,
+                          signature_inception,
+                          keytag))
+        rdata.extend(encode_name(signers_name))
+        rdata.extend(signature)
+        rr = DNSRR(name,
+                   dns_type_to_int('DS'),
+                   dns_class_to_int(clas),
+                   ttl,
+                   len(rdata),
+                   rdata, 0, 0)
+        return L2_RR_RRSIG.from_rr(rr)
 
     @staticmethod
     def from_rr(rr):
@@ -1091,6 +1218,28 @@ class L2_RR_DS(namedtuple('L2_RR_DS', ['name',
     @property
     def typ(self):
         return 'DS'
+
+    # RFC 4034 Section 5.3
+    @staticmethod
+    def from_presentation(name, ttl, clas, pa):
+        keytag = int(pa[0])
+        algorithm = int(pa[1])
+        digest_type = int(pa[2])
+        digest = ''.join(pa[3:])
+        digest = base64.b64decode(digest)
+        rdata = bytearray()
+        rdata.extend(pack('! H B B',
+                          keytag,
+                          algorithm,
+                          digest_type))
+        rdata.extend(digest)
+        rr = DNSRR(name,
+                   dns_type_to_int('DS'),
+                   dns_class_to_int(clas),
+                   ttl,
+                   len(rdata),
+                   rdata, 0, 0)
+        return L2_RR_DS.from_rr(rr)
 
     @staticmethod
     def from_rr(rr):
@@ -1274,3 +1423,69 @@ class L2_RR_NSEC3(namedtuple('L2_RR_NSEC3', ['name',
                                               self.next_hashed_owner_name).
                                           decode('ascii'),
                                           ' '.join(rr_types_as_str))
+
+
+class L2_RR_MX(namedtuple('L2_RR_MX', ['name',
+                                       'clas',
+                                       'ttl',
+                                       'preference',
+                                       'exchange'])):
+
+    __slots__ = ()
+
+    @property
+    def typ(self):
+        return 'MX'
+
+    # RFC 1035 Section 3.3.9
+    @staticmethod
+    def from_presentation(name, ttl, clas, pa):
+        preference = int(pa[0])
+        exchange = pa[1]
+        rdata = bytearray()
+        rdata.extend(pack('! H',
+                          preference))
+        rdata.extend(encode_name(exchange))
+        rr = DNSRR(name,
+                   dns_type_to_int('MX'),
+                   dns_class_to_int(clas),
+                   ttl,
+                   len(rdata),
+                   rdata, 0, 0)
+        return L2_RR_MX.from_rr(rr)
+
+    # RFC 4034 Section 6.2
+    def canonical_l1(self, ttl):
+        rdata = bytearray()
+        rdata.extend(pack('! H', self.preference))
+        rdata.extend(encode_name(self.exchange))
+        return DNSRR(self.name.lower(),
+                     dns_type_to_int(self.typ),
+                     dns_class_to_int('IN'),
+                     ttl,
+                     len(rdata),
+                     rdata,
+                     None,
+                     None)
+
+    @staticmethod
+    def from_rr(rr):
+        (preference, ) = unpack('! H', rr.rdata[0:2])
+        exchange, _ = decode_name(rr.rdata[2:], 0)
+        return L2_RR_MX(rr.name,
+                        dns_class_to_str(rr.clas),
+                        rr.ttl,
+                        preference,
+                        exchange)
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __str__(self):
+        return '%s %d %s %s %d %s' % (self.name,
+                                      self.ttl,
+                                      self.clas,
+                                      self.typ,
+                                      self.preference,
+                                      self.exchange)
+

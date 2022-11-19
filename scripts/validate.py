@@ -20,13 +20,16 @@ def print_help():
 
 def query_cmd(server, q, rr, dest):
     return 'digsec query @%s %s %s +rd +cd +do +udp_payload_size=2048 ' \
-        '+save-answer +save-answer-dir=%s' % (server, q, rr, dest)
+        '+debug +save-answer +save-answer-dir=%s' % (server, q, rr, dest)
 
 
 def validate_cmd(dest, rrset, rrsig, dnskey_or_ds):
-    return 'digsec validate %s %s %s' % (os.path.join(dest, rrset),
-                                         os.path.join(dest, rrsig),
-                                         os.path.join(dest, dnskey_or_ds))
+    return 'digsec validate %s %s %s +debug' % (os.path.join(dest,
+                                                             rrset),
+                                                os.path.join(dest,
+                                                             rrsig),
+                                                os.path.join(dest,
+                                                             dnskey_or_ds))
 
 
 def run(cmd):

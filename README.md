@@ -24,6 +24,32 @@ This is also true if it is used in a (bash) script. It might not be particularly
 
 Just run digsec to see options, flags and help, or much better see [my blog post](https://metebalci.com/blog/a-minimum-complete-tutorial-of-dnssec/) explaining how it is used with DNSSEC.
 
+# Supported Records, Algorithms and Digests
+
+These record types are supported in query: SOA, NS, A, AAAA, MX, TXT, DNSKEY, RRSIG, DS, NSEC, NSEC3.
+
+NSEC and NSEC3 is not supported for validation yet, but it will be added.
+
+These algorithms are supported:
+
+- 5: RSASHA1
+- 8: RSASHA256
+- 10: RSASHA512
+- 13: ECDSAP256SHA256
+- 14: ECDSAP384SHA384
+- 15: ED25519
+- 16: ED448
+
+There is no plan to support these algorithms: RSAMD5, DH, DSA, DSA-NSEC3-SHA1, RSASHA1-NSEC3-SHA1, ECC-GOST.
+
+These digests are supported: 
+
+- 1: SHA1
+- 2: SHA256
+- 4: SHA384
+
+There is no plan to support GOST R 34.11.94.
+
 # Hints
 
 - digsec do not add DNS flags implicitly. You might need to use +rd (recursive desired) often. Also, if you are looking to invalid DNSSEC records, you might need to use +cd (checking disabled) flag, otherwise the DNS server may not return them.
@@ -111,7 +137,9 @@ OK RRSIG (A, ECDSAP256SHA256) with DNSKEY (34505, ECDSAP256SHA256)
 # Release History
 
 0.8.2:
-  - 
+  - AAAA record type support
+  - view command
+  - Ed25519 and Ed448 support
 
 0.8.1:
   - digsec download outputs signature and CA file for trust anchor verification

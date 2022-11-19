@@ -178,7 +178,10 @@ def do_validate(argv):
                       (rr.clas, rrsig.clas))
             # len control is for root
             if len(rr.name) > 0:
-                if len(rr.name.split('.')) != rrsig.labels:
+                # -1 is because root has empty label and split('.') produces
+                # this empty label as well
+                # e.g. labels is 0 for root(.), 1 for com, 2 for metebalci.com
+                if (len(rr.name.split('.'))-1) != rrsig.labels:
                     print_answer_file(an_rrset_filename)
                     print_answer_file(corresponding_rrsig_filename)
                     error('RR.name has different number of labels than ' +

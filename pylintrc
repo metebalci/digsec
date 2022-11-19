@@ -1,2 +1,3 @@
 [MESSAGES CONTROL]
 disable=consider-using-f-string
+disable=no-else-return
