@@ -249,7 +249,10 @@ def do_validate(argv):
             if len(selected_ds_list) == 0:
                 print('WARNING: no DS for DNSKEY with keytag: %d' %
                         dnskey_signed_rrsig.keytag)
-                continue
+                # still not sure what to do here
+                # is it possible there are >1 dnskey.rrsig
+                # and one has no related ds record, other has
+                sys.exit(1)
             if len(selected_ds_list) > 1:
                 error('multiple DS with keytag: %d' %
                         dnskey_signed_rrsig.keytag)

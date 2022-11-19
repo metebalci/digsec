@@ -13,6 +13,7 @@ function do_test
 	scripts/validate.py $q $rr /tmp/digsec || EXITCODE=$?
   if [ $EXITCODE -ne 0 ] 
   then
+    echo "exiting with 1, test failed"
     exit 1
   fi
 }
@@ -26,6 +27,7 @@ function do_ftest
 	scripts/validate.py $q $rr /tmp/digsec || EXITCODE=$?
   if [ $EXITCODE -eq 0 ] 
   then 
+    echo "exiting with 1, test failed"
     exit 1
   fi
 }
