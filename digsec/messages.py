@@ -1488,4 +1488,3 @@ class L2_RR_MX(namedtuple('L2_RR_MX', ['name',
                                       self.typ,
                                       self.preference,
                                       self.exchange)
-
