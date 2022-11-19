@@ -21,6 +21,28 @@ from digsec.utils import dnssec_digest_type_to_int, dnssec_digest_type_to_str
 from digsec.utils import decode_name, encode_name, calculate_keytag
 from digsec.utils import dnssec_nsec3_algorithm_to_str
 
+# Some explanation on how this module works
+#
+# DNS... classes are basic, works on raw packets
+# L2 classes are abstract, with type specific functionality
+
+# There are a few ways to serialize/deserialize
+#
+# - to_packet->bytes, from_packet(bytes)
+# - from_rr(DNSRR)
+# - from_presentation(text)
+#
+# DNSRR is converted L2 by DNSRR.l2() which calls L2.from_rr() to parse rdata
+# L2 is converted to DNSRR by L2.canonical_l1()
+#
+# it is better to use from_presentation to directly instantiating L2 class
+# internally from_presentation creates a low level DNSRR with raw rdata and
+# then uses from_rr
+
+# For query, from_packet is used with data fetched from network
+#            to_packet is used to save answer file
+# For validate and view, from_packet is used when reading from answer file
+# For test, from_presentation is used
 
 class DNSMessage(namedtuple('DNSMessage', ['header',
                                            'question',
