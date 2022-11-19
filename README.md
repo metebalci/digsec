@@ -8,7 +8,7 @@ It is a raw DNS tool, that does not implicitly add any DNS flags, or automatical
 
 Technically, `digsec` is a validating, DNSSEC-aware resolver. However, it either does query (in other words lookup) or validate (in other words authenticate) at each run. With `query`, only a single DNS lookup is performed (e.g. lookup a DNSKEY record of a domain). With `validate`, only a single validation is performed (e.g. validate an A record with a DNSKEY record). Typically, for a DNSSEC validating query, `digsec` would have to be executed multiple times. `query` run naturally requires network communication, whereas `validate` run is off-line. To be able to run validation, the answers to queries can be saved to temporary files.
 
-DNSSEC Trust Anchors can be downloaded with `digsec`, and if required their validation can be done using openssl.
+DNSSEC Trust Anchors can be downloaded with `digsec`, and if required their validation can be done using openssl. Check `scripts/validate.py`.
 
 # Note to Developers
 
@@ -129,10 +129,6 @@ digsec validate /tmp/metebalci.com.IN.A /tmp/metebalci.com.IN.RRSIG.A /tmp/meteb
 digsec v0.8.1
 OK RRSIG (A, ECDSAP256SHA256) with DNSKEY (34505, ECDSAP256SHA256)
 ```
-
-# Known Issues
-
-- `scripts/validate.py` does not work with 2+ level domains e.g. www.metebalci.com
 
 # Release History
 
