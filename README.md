@@ -138,6 +138,7 @@ OK RRSIG (A, ECDSAP256SHA256) with DNSKEY (34505, ECDSAP256SHA256)
   - view command
   - changed default DNS of query and scripts/validate.py to Cloudflare 1.1.1.1
   - fixed name, it was shown without root (metebalci.com instead of metebalci.com.) 
+  - better full validation script for testing at scripts/validate.py
 
 0.8.1:
   - digsec download outputs signature and CA file for trust anchor verification
