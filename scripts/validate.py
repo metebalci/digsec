@@ -42,7 +42,7 @@ def run(cmd):
 def main():
     rr = 'A'
     dest = '/tmp'
-    server = '8.8.8.8'
+    server = '1.1.1.1'
     if len(sys.argv) >= 2:
         q = sys.argv[1]
     if len(sys.argv) >= 3:

@@ -1,6 +1,7 @@
 #!/bin/bash
 
 EXE=scripts/validate.py
+NS=1.1.1.1
 
 EXITCODE=0
 
@@ -10,7 +11,7 @@ function do_test
   rr=$2
 	rm -rf /tmp/digsec
 	mkdir /tmp/digsec
-	scripts/validate.py $q $rr /tmp/digsec || EXITCODE=$?
+	scripts/validate.py $q $rr /tmp/digsec $NS || EXITCODE=$?
   if [ $EXITCODE -ne 0 ] 
   then
     echo "exiting with 1, test failed"
@@ -24,7 +25,7 @@ function do_ftest
   rr=$2
 	rm -rf /tmp/digsec
 	mkdir /tmp/digsec
-	scripts/validate.py $q $rr /tmp/digsec || EXITCODE=$?
+	scripts/validate.py $q $rr /tmp/digsec $NS || EXITCODE=$?
   if [ $EXITCODE -eq 0 ] 
   then 
     echo "exiting with 1, test failed"
