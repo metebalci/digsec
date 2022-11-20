@@ -9,28 +9,44 @@ function do_test
 {
   q=$1
   rr=$2
+  echo "testing positive $q $rr"
 	rm -rf /tmp/digsec
 	mkdir /tmp/digsec
-	scripts/validate.py $q $rr /tmp/digsec $NS || EXITCODE=$?
+	digsec.resolve $q $rr /tmp/digsec $NS || EXITCODE=$?
   if [ $EXITCODE -ne 0 ] 
   then
-    echo "exiting with 1, test failed"
+    echo "exiting with 1, query fail"
     exit 1
   fi
+	digsec.authenticate $q $rr /tmp/digsec || EXITCODE=$?
+  if [ $EXITCODE -ne 0 ] 
+  then
+    echo "exiting with 1, validate fail (expected success)"
+    exit 1
+  fi
+  echo "test success"
 }
 
 function do_ftest
 {
   q=$1
   rr=$2
+  echo "testing negative $q $rr"
 	rm -rf /tmp/digsec
 	mkdir /tmp/digsec
-	scripts/validate.py $q $rr /tmp/digsec $NS || EXITCODE=$?
-  if [ $EXITCODE -eq 0 ] 
+	digsec.resolve $q $rr /tmp/digsec $NS || EXITCODE=$?
+  if [ $EXITCODE -ne 0 ] 
   then 
-    echo "exiting with 1, test failed"
+    echo "exiting with 1, query fail"
     exit 1
   fi
+	digsec.authenticate $q $rr /tmp/digsec || EXITCODE=$?
+  if [ $EXITCODE -eq 0 ] 
+  then 
+    echo "exiting with 1, validate success (expected fail)"
+    exit 1
+  fi
+  echo "test success"
 }
 
 do_test . DNSKEY
