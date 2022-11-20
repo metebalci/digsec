@@ -136,7 +136,8 @@ OK RRSIG (A, ECDSAP256SHA256) with DNSKEY (34505, ECDSAP256SHA256)
   - AAAA record type support
   - Ed25519 and Ed448 support
   - view command
-  - changed default DNS of query and scripts/validate.py to Cloudflare 1.1.1.1 
+  - changed default DNS of query and scripts/validate.py to Cloudflare 1.1.1.1
+  - fixed name, it was shown without root (metebalci.com instead of metebalci.com.) 
 
 0.8.1:
   - digsec download outputs signature and CA file for trust anchor verification
