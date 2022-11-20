@@ -84,6 +84,7 @@ def do_download(argv):
             with urllib.request.urlopen(root_anchors_location + '/root-anchors.xml') as r:
                 trust_anchors_xml = r.read()
         except:
+            # pylint: disable=raise-missing-from
             raise DigsecError('cannot read ' \
                               '%s/root-anchors.xml' % root_anchors_location)
     else:
@@ -96,6 +97,7 @@ def do_download(argv):
                 with urllib.request.urlopen(root_anchors_location + "/root-anchors.p7s") as r:
                     trust_anchors_xml_signature = r.read()
             except:
+                # pylint: disable=raise-missing-from
                 raise DigsecError('cannot read ' \
                                   '%s/root-anchors.p7s' % root_anchors_location)
     print('Trust-Anchor contains keytags: %s' %

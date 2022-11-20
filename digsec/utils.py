@@ -315,6 +315,7 @@ def parse_flags(argv, default_flags):
 
 
 # get matching DNS keys
+# pylint: disable=too-many-arguments
 def get_dnskeys(dnskey_rrset, keytag, algorithm, name, sep, zsk):
     """
     Find the DNSKEY with keytag, algorithm, name

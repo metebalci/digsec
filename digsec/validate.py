@@ -5,8 +5,6 @@
 handles validate command
 """
 import binascii
-import sys
-from datetime import datetime
 from digsec import dprint, DigsecError
 from digsec.algorithms import get_algorithm, get_digest
 from digsec.help import display_help_validate

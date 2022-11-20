@@ -3,7 +3,7 @@
 """
 handles validate command
 """
-from digsec import dprint
+from digsec import dprint, DigsecError
 from digsec.help import display_help_view
 from digsec.utils import parse_flags, ensure_file_exists
 from digsec.answer import print_answer_file

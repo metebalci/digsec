@@ -1,2 +1,2 @@
 [MESSAGES CONTROL]
-disable=consider-using-f-string,no-else-return,useless-option-value
+disable=consider-using-f-string,no-else-return,no-else-raise,useless-option-value,duplicate-code

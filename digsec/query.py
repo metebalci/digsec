@@ -5,6 +5,7 @@
 handles query command
 """
 import os
+from digsec import DigsecError
 from digsec.messages import DNSMessage, DNSHeader, DNSFlags
 from digsec.messages import DNSQuestionRR, DNSOptRR
 from digsec.utils import dprint, parse_flags
@@ -69,7 +70,6 @@ def do_query(argv):
     dprint('at')
     dprint(at)
     if len(non_plus) == 0:
-        raise DigsecError('Missing arguments')
         display_help_query()
     elif len(non_plus) == 1:
         qname = non_plus[0]
