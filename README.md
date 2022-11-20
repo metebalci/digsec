@@ -133,10 +133,10 @@ OK RRSIG (A, ECDSAP256SHA256) with DNSKEY (34505, ECDSAP256SHA256)
 # Release History
 
 0.9: 
-  - messages.py splitted into multiple files and moved into digsec.messages
   - AAAA record type support
-  - view command
   - Ed25519 and Ed448 support
+  - view command
+  - changed default DNS of query and scripts/validate.py to Cloudflare 1.1.1.1 
 
 0.8.1:
   - digsec download outputs signature and CA file for trust anchor verification
