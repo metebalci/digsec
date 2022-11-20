@@ -79,6 +79,7 @@ There is no plan to support GOST R 34.11.94.
   - test resolve and authenticate methods resolve.py and authenticate.py,
     they can be called by digsec.resolve and digsec.authenticate
   - major changes in error handling and some code reorganization
+  - EDNS0, Extended DNS Errors (Code 15) handled explicitly
 
 0.8.1:
   - digsec download outputs signature and CA file for trust anchor verification

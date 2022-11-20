@@ -615,7 +615,13 @@ class L2_EDNS(namedtuple('L2_EDNS', ['udp_payload_size',
         opts.append('\tEXTENDED-RCODE: %s' % self.extended_rcode)
         opts.append('\tVERSION: %d' % self.version)
         opts.append('\tDNSSEC OK (DO): %s' % self.dnssec_ok)
-        opts.append('\tOptions: %s' % ','.join(self.options))
+        opts.append('\tOptions: ')
+        for opt in self.options:
+            if opt[0] == 15:
+                opts.append('\t\t%d: %s' % (opt[0],
+                                            opt[1][2:].decode('ascii')))
+            else:
+                opts.append('\t\t%s' % opt)
         return '\n'.join(opts)
 
 
