@@ -2,25 +2,18 @@
 # pylint: disable=missing-function-docstring
 # pylint: disable=invalid-name
 """
-A script for fully authenticating DNS response with digsec.
-This requires multiple queries and validations.
-
+A script for authenticating DNS responses with digsec.
+This uses previously saved responses.
+It requires openssl executable for authenticating the trust anchor.
 based on RFC 4035, Section 5: Authenticating DNS Responses
-
-This is not working yet for 2+ level domains (e.g. www.metebalci.com).
 """
 import os
 import sys
 
 
 def print_help():
-    print('Usage: validate.py <domain> <rr> <dest_folder> <server>')
+    print('Usage: validate.py <domain> <rr> <dest_folder>')
     sys.exit(1)
-
-
-def query_cmd(server, q, rr, dest):
-    return 'digsec query @%s %s %s +rd +cd +do +udp_payload_size=2048 ' \
-        '+debug +save-answer +save-answer-dir=%s' % (server, q, rr, dest)
 
 
 def validate_cmd(dest, rrset, rrsig, dnskey_or_ds):
@@ -42,16 +35,13 @@ def run(cmd):
 def main():
     rr = 'A'
     dest = '/tmp'
-    server = '1.1.1.1'
     if len(sys.argv) >= 2:
         q = sys.argv[1]
     if len(sys.argv) >= 3:
         rr = sys.argv[2]
     if len(sys.argv) >= 4:
         dest = sys.argv[3]
-    if len(sys.argv) >= 5:
-        server = sys.argv[4]
-    if len(sys.argv) >= 6 or len(sys.argv) <= 1:
+    if len(sys.argv) >= 5 or len(sys.argv) <= 1:
         print_help()
     qparts = q.split('.')
 
@@ -69,38 +59,6 @@ def main():
                          os.path.join(dest, 'root-anchors.xml'))
     print(current_cmd)
     run(current_cmd)
-
-    print('--- querying ---')
-
-    print('saving _root.DNSKEY')
-    current_cmd = query_cmd(server, '.', 'DNSKEY', dest)
-    print(current_cmd)
-    run(current_cmd)
-
-    if q != '.':
-
-        for i in range(len(qparts) - 1, -1, -1):
-
-            current_domain = '.'.join(qparts[i:])
-
-            print('saving %s.DS' % current_domain)
-            current_cmd = query_cmd(server, current_domain, 'DS', dest)
-            print(current_cmd)
-            run(current_cmd)
-
-            print('saving %s.DNSKEY' % current_domain)
-            current_cmd = query_cmd(server, current_domain, 'DNSKEY', dest)
-            print(current_cmd)
-            run(current_cmd)
-
-            # DNSKEY is already saved above
-            if i == 0 and rr != 'DNSKEY':
-                print('saving %s.%s' % (current_domain, rr))
-                current_cmd = query_cmd(server, current_domain, rr, dest)
-                print(current_cmd)
-                run(current_cmd)
-
-    print('--- validating ---')
 
     print('validating _root.DNSKEY with _root.DS (trust anchor)')
     current_cmd = validate_cmd(dest,
@@ -151,6 +109,7 @@ def main():
                 run(current_cmd)
 
             higher_domain = current_domain
+
 
 if __name__ == "__main__":
     main()
