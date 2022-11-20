@@ -17,12 +17,12 @@ def print_help():
 
 
 def validate_cmd(dest, rrset, rrsig, dnskey_or_ds):
-    return 'digsec validate %s %s %s +debug' % (os.path.join(dest,
-                                                             rrset),
-                                                os.path.join(dest,
-                                                             rrsig),
-                                                os.path.join(dest,
-                                                             dnskey_or_ds))
+    return 'digsec validate %s %s %s' % (os.path.join(dest,
+                                                      rrset),
+                                         os.path.join(dest,
+                                                      rrsig),
+                                         os.path.join(dest,
+                                                      dnskey_or_ds))
 
 
 def run(cmd):

@@ -18,7 +18,10 @@ def print_help():
 
 def query_cmd(server, q, rr, dest):
     return 'digsec query @%s %s %s +rd +cd +do +udp_payload_size=2048 ' \
-        '+debug +save-answer +save-answer-dir=%s' % (server, q, rr, dest)
+        '+show-friendly +save-answer +save-answer-dir=%s' % (server,
+                                                             q,
+                                                             rr,
+                                                             dest)
 
 
 def run(cmd):
