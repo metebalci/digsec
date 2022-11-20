@@ -132,7 +132,8 @@ OK RRSIG (A, ECDSAP256SHA256) with DNSKEY (34505, ECDSAP256SHA256)
 
 # Release History
 
-0.8.2:
+0.9: 
+  - messages.py splitted into multiple files and moved into digsec.messages
   - AAAA record type support
   - view command
   - Ed25519 and Ed448 support
