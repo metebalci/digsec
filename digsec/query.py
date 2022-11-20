@@ -140,7 +140,7 @@ def do_query(argv):
             server = server_and_port[0]
             port = int(server_and_port[1])
     else:
-        server = '8.8.8.8'
+        server = '1.1.1.1'
         port = 53
     dprint('server:port = %s:%d' % (server, port))
 

@@ -70,10 +70,10 @@ def display_help_query():
 
     Default FLAGS are:
           if +save-answer is not specified, +show-friendly is implied.
-          if server is not specified, Google Public DNS 8.8.8.8 is used at port 53.
+          if server is not specified, Cloudflare Public DNS 1.1.1.1 is used at port 53.
 
     non-53 ports:
-          @server can be given with a port number e.g. @8.8.8.8:54
+          @server can be given with a port number e.g. @a.b.c.d:53
 
     Notes:
     - +do requires +udp_payload_size=<size>
