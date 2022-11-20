@@ -4,17 +4,13 @@
 
 `digsec` is a standalone command line tool to be used for self-learning, teaching or troubleshooting DNSSEC. 
 
-It is a raw DNS tool, that does not implicitly add any DNS flags, or automatically perform multi-step operations like authenticating a DNSSEC record.
+It is primarily a raw DNS tool, that does not implicitly add any DNS flags, or automatically perform multi-step operations like authenticating a DNSSEC record.
 
-Technically, `digsec` is a validating, DNSSEC-aware resolver. However, it either does query (in other words lookup) or validate (in other words authenticate) at each run. With `query`, only a single DNS lookup is performed (e.g. lookup a DNSKEY record of a domain). With `validate`, only a single validation is performed (e.g. validate an A record with a DNSKEY record). Typically, for a DNSSEC validating query, `digsec` would have to be executed multiple times. `query` run naturally requires network communication, whereas `validate` run is off-line. To be able to run validation, the answers to queries can be saved to temporary files.
+Technically, `digsec` is similar to a validating, DNSSEC-aware resolver. However, it either does query (in other words lookup) or validate (in other words authenticate) at each run. With `query`, only a single DNS lookup is performed (e.g. lookup a DNSKEY record of a domain). With `validate`, only a single validation is performed (e.g. validate an A record with a DNSKEY record). Typically, for a DNSSEC validating query, `digsec` would have to be executed multiple times. `query` run naturally requires network communication, whereas `validate` run is off-line. To be able to run validation, the answers to queries can be saved to temporary files. This is what `digsec.resolve` and `digsec.authenticate` does, but they are not production quality, and only provided as an example.
 
-DNSSEC Trust Anchors can be downloaded with `digsec`, and if required their validation can be done using openssl. Check `scripts/validate.py`.
+DNSSEC Trust Anchors can be downloaded with `digsec`, and if required their validation can be done using openssl. `digsec.authenticate` does the validation using `openssl`.
 
-# Note to Developers
-
-`digsec` is not supposed to be embedded into another code e.g. it is not a library. At the moment, I do not plan to convert it to a library, so if you are trying to embed it to another code, I might not be able to help due to various needs that might arise.
-
-This is also true if it is used in a (bash) script. It might not be particularly script friendly, and I do not at the moment plan to make it as such. The script(s) under `scripts` folder is only meant to be used as indicated, they are not standalone tools. Basically, if you want to use `digsec` for a certain task, you have to write your own script using the `digsec` tool directly not the scripts.
+`digsec` is not supposed to be embedded into another code e.g. it is not a library. There is no proper error reporting (all errors are raised as exception and catched to give a single error message to user), and no proper return values. I do not plan to change this.
 
 # Install
 
@@ -24,11 +20,29 @@ This is also true if it is used in a (bash) script. It might not be particularly
 
 Just run digsec to see options, flags and help, or much better see [my blog post](https://metebalci.com/blog/a-minimum-complete-tutorial-of-dnssec/) explaining how it is used with DNSSEC.
 
+As a simple example, you can try:
+
+```
+$ digsec.resolve metebalci.com DNSKEY /tmp 1.1.1.1
+...
+$ digsec.authenticate metebalci.com DNSKEY /tmp
+...
+```
+
+`digsec.resolve` command above will query metebalci.com DNSKEY and all other required records for authenticating this record. All these DNS queries will be send to 1.1.1.1. It will save the responses to these queries under `/tmp`. Then `digsec.authenticate` command will try to authenticate metebalci.com DNSKEY using the save responses under `/tmp`. These commands should work without any error.
+
+In case of any error, `digsec`:
+
+- returns a non-zero exit code
+- prints a message starting with `ERROR:` describing the error  
+
+`digsec.resolve` and `digsec.authenticate` follows a similar eror reporting but it is not extensively tested.
+
 # Supported Records, Algorithms and Digests
 
 These record types are supported in query: SOA, NS, A, AAAA, MX, TXT, DNSKEY, RRSIG, DS, NSEC, NSEC3.
 
-NSEC and NSEC3 is not supported for validation yet, but it will be added.
+Negative authentication is not supported yet, so NSEC and NSEC3 is not supported for validation, but it will be added.
 
 These algorithms are supported:
 
@@ -40,7 +54,7 @@ These algorithms are supported:
 - 15: ED25519
 - 16: ED448
 
-There is no plan to support these algorithms: RSAMD5, DH, DSA, DSA-NSEC3-SHA1, RSASHA1-NSEC3-SHA1, ECC-GOST.
+There is no plan to support: RSAMD5, DH, DSA, DSA-NSEC3-SHA1, RSASHA1-NSEC3-SHA1, ECC-GOST.
 
 These digests are supported: 
 
@@ -54,82 +68,6 @@ There is no plan to support GOST R 34.11.94.
 
 - digsec do not add DNS flags implicitly. You might need to use +rd (recursive desired) often. Also, if you are looking to invalid DNSSEC records, you might need to use +cd (checking disabled) flag, otherwise the DNS server may not return them.
 
-- see `scripts/validate.py` to see a full validation and run for example `scripts/validate.py metebalci.com A`.
-
-```
-./validate.py metebalci.com A /tmp 8.8.8.8
-saving _root.DS (trust anchor)
-digsec download +save-root-anchors=/tmp/root-anchors.xml +save-ds-anchors=/tmp/_root.IN
-digsec v0.8.1
-Trust-Anchor contains keytags: 19036-8, 20326-8
-validating trust anchor
-openssl smime -verify -CAfile /tmp/root-anchors.xml.ca -inform der -in /tmp/root-anchors.xml.p7s -content /tmp/root-anchors.xml
-<?xml version="1.0" encoding="UTF-8"?>
-<TrustAnchor id="380DC50D-484E-40D0-A3AE-68F2B18F61C7" source="http://data.iana.org/root-anchors/root-anchors.xml">
-<Zone>.</Zone>
-<KeyDigest id="Kjqmt7v" validFrom="2010-07-15T00:00:00+00:00" validUntil="2019-01-11T00:00:00+00:00">
-<KeyTag>19036</KeyTag>
-<Algorithm>8</Algorithm>
-<DigestType>2</DigestType>
-<Digest>49AAC11D7B6F6446702E54A1607371607A1A41855200FD2CE1CDDE32F24E8FB5</Digest>
-</KeyDigest>
-<KeyDigest id="Klajeyz" validFrom="2017-02-02T00:00:00+00:00">
-<KeyTag>20326</KeyTag>
-<Algorithm>8</Algorithm>
-<DigestType>2</DigestType>
-<Digest>E06D44B80B8F1D39A95C0B0D7C65D08458E880409BBC683457104237C7F8EC8D</Digest>
-</KeyDigest>
-</TrustAnchor>
-Verification successful
---- querying ---
-saving _root.DNSKEY
-digsec query @8.8.8.8 . DNSKEY +rd +cd +do +udp_payload_size=2048 +save-answer +save-answer-dir=/tmp
-digsec v0.8.1
-saving com.DS
-digsec query @8.8.8.8 com DS +rd +cd +do +udp_payload_size=2048 +save-answer +save-answer-dir=/tmp
-digsec v0.8.1
-saving com.DNSKEY
-digsec query @8.8.8.8 com DNSKEY +rd +cd +do +udp_payload_size=2048 +save-answer +save-answer-dir=/tmp
-digsec v0.8.1
-saving metebalci.com.DS
-digsec query @8.8.8.8 metebalci.com DS +rd +cd +do +udp_payload_size=2048 +save-answer +save-answer-dir=/tmp
-digsec v0.8.1
-saving metebalci.com.DNSKEY
-digsec query @8.8.8.8 metebalci.com DNSKEY +rd +cd +do +udp_payload_size=2048 +save-answer +save-answer-dir=/tmp
-digsec v0.8.1
-saving metebalci.com.A
-digsec query @8.8.8.8 metebalci.com A +rd +cd +do +udp_payload_size=2048 +save-answer +save-answer-dir=/tmp
-digsec v0.8.1
---- validating ---
-validating _root.DNSKEY with _root.DS (trust anchor)
-digsec validate /tmp/_root.IN.DNSKEY /tmp/_root.IN.RRSIG.DNSKEY /tmp/_root.IN.DS
-digsec v0.8.1
-OK RRSIG (DNSKEY, RSASHA256) with DNSKEY (20326, RSASHA256)
-OK DNSKEY (20326, RSASHA256) with DS (SHA-256)
-validating com.DS with _root.DNSKEY
-digsec validate /tmp/com.IN.DS /tmp/com.IN.RRSIG.DS /tmp/_root.IN.DNSKEY
-digsec v0.8.1
-OK RRSIG (DS, RSASHA256) with DNSKEY (18733, RSASHA256)
-validating com.DNSKEY with com.DS
-digsec validate /tmp/com.IN.DNSKEY /tmp/com.IN.RRSIG.DNSKEY /tmp/com.IN.DS
-digsec v0.8.1
-OK RRSIG (DNSKEY, RSASHA256) with DNSKEY (30909, RSASHA256)
-OK DNSKEY (30909, RSASHA256) with DS (SHA-256)
-validating metebalci.com.DS with com.DNSKEY
-digsec validate /tmp/metebalci.com.IN.DS /tmp/metebalci.com.IN.RRSIG.DS /tmp/com.IN.DNSKEY
-digsec v0.8.1
-OK RRSIG (DS, RSASHA256) with DNSKEY (53929, RSASHA256)
-validating metebalci.com.DNSKEY with metebalci.com.DS
-digsec validate /tmp/metebalci.com.IN.DNSKEY /tmp/metebalci.com.IN.RRSIG.DNSKEY /tmp/metebalci.com.IN.DS
-digsec v0.8.1
-OK RRSIG (DNSKEY, ECDSAP256SHA256) with DNSKEY (2371, ECDSAP256SHA256)
-OK DNSKEY (2371, ECDSAP256SHA256) with DS (SHA-256)
-validating metebalci.com.A with metebalci.com.DNSKEY
-digsec validate /tmp/metebalci.com.IN.A /tmp/metebalci.com.IN.RRSIG.A /tmp/metebalci.com.IN.DNSKEY
-digsec v0.8.1
-OK RRSIG (A, ECDSAP256SHA256) with DNSKEY (34505, ECDSAP256SHA256)
-```
-
 # Release History
 
 0.9: 
@@ -140,6 +78,7 @@ OK RRSIG (A, ECDSAP256SHA256) with DNSKEY (34505, ECDSAP256SHA256)
   - fixed name, it was shown without root (metebalci.com instead of metebalci.com.) 
   - test resolve and authenticate methods resolve.py and authenticate.py,
     they can be called by digsec.resolve and digsec.authenticate
+  - major changes in error handling and some code reorganization
 
 0.8.1:
   - digsec download outputs signature and CA file for trust anchor verification
