@@ -1,15 +1,19 @@
 # coding: utf-8
 # pylint: disable=invalid-name
+# pylint: disable=missing-function-docstring
 """
 handles validate command
 """
 import binascii
 import sys
 from datetime import datetime
-from digsec import dprint, error, ensure_file_exists
-from digsec.algorithms import dnssec_algorithms, dnssec_digests
+from digsec import dprint, DigsecError
+from digsec.algorithms import get_algorithm, get_digest
 from digsec.help import display_help_validate
 from digsec.utils import parse_flags, get_dnskeys
+from digsec.utils import ensure_single_name_type_class_in_rrset
+from digsec.utils import check_rrsig_rr_validity
+from digsec.utils import ensure_file_exists
 from digsec.answer import print_answer_file, read_answer_file
 
 
@@ -31,16 +35,12 @@ def validate_rrsig(rrset,
         (False, None) -- if rrsig cannot be validated
     """
 
-    # finds our algo function
-    # raises Error if algo is not supported
-    verification_algorithm = dnssec_algorithms.get(rrsig.algorithm)
-
-    # finds corresponding ZSK DNSKEY with same keytag, algo and name
-    # raises Error if no DNSKEY can be found
     dnskeys = get_dnskeys(dnskey_rrset,
                           rrsig.keytag,
                           rrsig.algorithm,
-                          rrsig.signers_name)
+                          rrsig.signers_name,
+                          None,
+                          True)
 
     # RFC 4034 Section 6.2
     # canonical form with original TTL, names changed to lowercase etc.
@@ -64,11 +64,16 @@ def validate_rrsig(rrset,
     dprint('Signed Data (RRSIG + canonical RRSET): 0x%s' %
            binascii.hexlify(signed_data).decode('ascii'))
 
-    # if multiple dnskeys match the requirements, each should be tried
-    for dnskey in dnskeys:
-        dprint('Using DNSKEY name: %s, keytag: %d, algorithm: %s' %
-               (dnskey.name, dnskey.keytag, dnskey.algorithm))
+    verification_algorithm = get_algorithm(rrsig.algorithm)
 
+    # according to RFC 4035: Section 5.3.1
+    # It is possible for more than one DNSKEY RR to match the conditions
+    # above.  In this case, the validator cannot predetermine which DNSKEY
+    # RR to use to authenticate the signature, and it MUST try each
+    # matching DNSKEY RR until either the signature is validated or the
+    # validator has run out of matching public keys to try.
+
+    for dnskey in dnskeys:
         verified = verification_algorithm(bytes(signed_data),
                                           bytes(rrsig.signature),
                                           dnskey)
@@ -91,23 +96,91 @@ def validate_dnskey(dnskey, ds):
         False -- if not
     """
 
-    if not dnskey.zone_key:
-        error(('DNSKEY keytag %d, algorithm %s is ' +
-               'not marked as Zone Key (bit 7)') % (dnskey.keytag,
-                                                    dnskey.algorithm))
-
-    verification_algorithm = dnssec_digests[ds.digest_type]
-    if verification_algorithm is None:
-        error('digsec does not support digest: %s yet' %
-              ds.digest_type)
-
     dprint('Hashed Data (DNSKEY NAME + DNSKEY RDATA): 0x%s' %
            binascii.hexlify(dnskey.digest_data).decode('ascii'))
+
+    verification_algorithm = get_digest(ds.digest_type)
 
     verified = verification_algorithm(dnskey.digest_data, ds.digest)
 
     return verified
 
+
+# pylint: disable=too-many-branches
+# This is the main validate call, which calls validate_rrsig and _dnskey
+def validate(rrset,
+             rrsig,
+             dnskey_or_ds_rrset):
+
+    ensure_single_name_type_class_in_rrset(rrset)
+
+    if rrsig.type_covered == 'DNSKEY':
+        ds_rrset = []
+        for ds_rr in dnskey_or_ds_rrset:
+            ds_rr = ds_rr.l2()
+            if ds_rr.typ != 'DS':
+                raise DigsecError('RRSIG covers DNSKEY, ' \
+                                  'but %s provided not DS' % ds_rr.typ)
+            ds_rrset.append(ds_rr)
+        # also set dnskey_rrset because it also going to be used
+        # by first validate_rrsig just below
+        dnskey_rrset = rrset
+    else:
+        dnskey_rrset = []
+        for dnskey_rr in dnskey_or_ds_rrset:
+            dnskey_rr = dnskey_rr.l2()
+            if dnskey_rr.typ != 'DNSKEY':
+                raise DigsecError('RRSIG covers %s, but %s provided ' \
+                                  'not DNSKEY' % (rrsig.type_covered,
+                                                  ds_rr.typ))
+            dnskey_rrset.append(dnskey_rr)
+
+    # not sure about this
+    zone = dnskey_rrset[0].name
+    check_rrsig_rr_validity(rrsig, rrset, zone, dnskey_rrset)
+
+    # all RRSIG is signed with DNSKEY, also RRSIG.DNSKEY
+    # but when it is RRSIG.DNSKEY, the digest of DNSKEY
+    # also has to be checked against the DS
+    valid, dnskey_signed_rrsig = validate_rrsig(rrset,
+                                                rrsig,
+                                                dnskey_rrset)
+
+    if valid:
+        dprint('OK: SIGNATURE VALID: RRSIG(%s,%s) ' \
+               'with DNSKEY(%d,%s)' % (rrsig.type_covered,
+                                       rrsig.algorithm,
+                                       dnskey_signed_rrsig.keytag,
+                                       dnskey_signed_rrsig.algorithm))
+    else:
+        raise DigsecError('NOK: SIGNATURE INVALID: RRSIG(%s,%s) ' \
+                          'with DNSKEY(%d,%s)' % (rrsig.type_covered,
+                                                  rrsig.algorithm,
+                                                  dnskey_signed_rrsig.keytag,
+                                                  dnskey_signed_rrsig.algorithm))
+
+    if rrsig.type_covered == 'DNSKEY':
+        # checking the dnskey signed RRSIG is same as the one
+        # having the digest in DS
+        dprint(ds_rrset)
+        selected_ds_list = []
+        for ds in ds_rrset:
+            if ds.keytag == dnskey_signed_rrsig.keytag:
+                selected_ds_list.append(ds)
+        if len(selected_ds_list) == 0:
+            raise DigsecError('no DS for DNSKEY with keytag: %d' %
+                              dnskey_signed_rrsig.keytag)
+        for ds in selected_ds_list:
+            valid = validate_dnskey(dnskey_signed_rrsig, ds)
+            if valid:
+                dprint('OK: DIGEST VALID: DNSKEY(%d,%s) ' \
+                       'with DS(%s)' % (ds.keytag,
+                                        ds.algorithm,
+                                        ds.digest_type))
+                return
+        raise DigsecError('NOK: NO VALID DIGEST FOUND ' \
+                          'FOR DNSKEY(%d,%s)' % (ds.keytag,
+                                                 ds.algorithm))
 
 # pylint: disable=too-many-branches
 # pylint: disable=too-many-locals
@@ -119,7 +192,7 @@ def do_validate(argv):
     non_plus = list(filter(lambda x: x[0] != '+', argv))
     dprint(non_plus)
     if len(non_plus) != 3:
-        error('Missing arguments, see usage')
+        raise DigsecError('Missing arguments, see usage')
     else:
         an_rrset_filename = non_plus[0]
         ensure_file_exists(an_rrset_filename)
@@ -131,7 +204,7 @@ def do_validate(argv):
     flags = parse_flags(argv[3:], default_flags)
     dprint(flags)
     an_rrset = read_answer_file(an_rrset_filename)
-    corresponding_rrsig = read_answer_file(corresponding_rrsig_filename)
+    corresponding_rrsig_rrset = read_answer_file(corresponding_rrsig_filename)
     dnskey_or_ds_rrset = read_answer_file(dnskey_or_ds_rrset_filename)
     if flags['show-file-contents']:
         print_answer_file(an_rrset_filename)
@@ -139,136 +212,18 @@ def do_validate(argv):
         print_answer_file(dnskey_or_ds_rrset_filename)
     if len(an_rrset) == 0:
         print_answer_file(an_rrset_filename)
-        error('no RR in the %s file' % an_rrset_filename)
-    if len(corresponding_rrsig) == 0:
+        raise DigsecError('no RR in the %s file' % an_rrset_filename)
+    if len(corresponding_rrsig_rrset) == 0:
         print_answer_file(corresponding_rrsig_filename)
-        error('no RRSIG in the %s file' % corresponding_rrsig_filename)
+        raise DigsecError('no RRSIG in the %s file' % corresponding_rrsig_filename)
+    if len(corresponding_rrsig_rrset) > 1:
+        print_answer_file(corresponding_rrsig_filename)
+        raise DigsecError('multiple (>1) RRSIG in the %s file' %
+                          corresponding_rrsig_filename)
     if len(dnskey_or_ds_rrset) == 0:
         print_answer_file(dnskey_or_ds_rrset_filename)
-        error('no DNSKEY or DS in the %s file' % dnskey_or_ds_rrset_filename)
+        raise DigsecError('no DNSKEY or DS RR in the %s file' %
+                          dnskey_or_ds_rrset_filename)
     rrset = list(map(lambda x: x.l2(), an_rrset))
-    an_rr = rrset[0]
-    now = datetime.now()
-    for one_corresponding_rrsig in corresponding_rrsig:
-        rrsig = one_corresponding_rrsig.l2()
-        for rr in rrset:
-            if rr.name != an_rr.name:
-                print_answer_file(an_rrset_filename)
-                error('multiple names exist in %s' % an_rrset_filename)
-            if rr.typ != an_rr.typ:
-                print_answer_file(an_rrset_filename)
-                error('multiple types exists in %s' % an_rrset_filename)
-            if rr.clas != an_rr.clas:
-                print_answer_file(an_rrset_filename)
-                error('multiple classes exist in %s' % an_rrset_filename)
-            if rr.name != rrsig.name:
-                print_answer_file(an_rrset_filename)
-                print_answer_file(corresponding_rrsig_filename)
-                error('RR.name: %s is different than RRSIG.name: %s' %
-                      (rr.name, rrsig.name))
-            if rr.typ != rrsig.type_covered:
-                print_answer_file(an_rrset_filename)
-                print_answer_file(corresponding_rrsig_filename)
-                error('RRSIG does not cover RR type %s but %s' % (rr.typ,
-                                                                  rrsig.typ))
-            if rr.clas != rrsig.clas:
-                print_answer_file(an_rrset_filename)
-                print_answer_file(corresponding_rrsig_filename)
-                error('RR.class: %s is different than RRSIG.class: %s' %
-                      (rr.clas, rrsig.clas))
-            # len control is for root
-            if len(rr.name) > 0:
-                # -1 is because root has empty label and split('.') produces
-                # this empty label as well
-                # e.g. labels is 0 for root(.), 1 for com, 2 for metebalci.com
-                if (len(rr.name.split('.'))-1) != rrsig.labels:
-                    print_answer_file(an_rrset_filename)
-                    print_answer_file(corresponding_rrsig_filename)
-                    error('RR.name has different number of labels than ' +
-                          'RRSIG.labels')
-
-        if now < rrsig.signature_inception:
-            error('RRSIG is not valid yet (now < signature inception)')
-
-        if now > rrsig.signature_expiration:
-            error('RRSIG is not valid anymore (now > signature expiration)')
-
-        if rrsig.type_covered == 'DNSKEY':
-            ds_rrset = []
-            for ds_rr in dnskey_or_ds_rrset:
-                ds_rr = ds_rr.l2()
-                if ds_rr.typ != 'DS':
-                    error(('RRSIG covers DNSKEY but DS is not provided, ' +
-                           'but %s' % ds_rr.typ))
-                ds_rrset.append(ds_rr)
-            # also set dnskey_rrset because it also going to be used
-            # by first validate_rrsig just below
-            dnskey_rrset = rrset
-        else:
-            dnskey_rrset = []
-            for dnskey_rr in dnskey_or_ds_rrset:
-                dnskey_rr = dnskey_rr.l2()
-                if dnskey_rr.typ != 'DNSKEY':
-                    error(('RRSIG covers %s but DNSKEY is not provided, ' +
-                           'but %s') % (rrsig.type_covered, dnskey_rr.typ))
-                dnskey_rrset.append(dnskey_rr)
-
-        # all RRSIG is signed with DNSKEY, also RRSIG.DNSKEY
-        # but when it is RRSIG.DNSKEY, the digest of DNSKEY
-        # also has to be checked against the DS
-        valid, dnskey_signed_rrsig = validate_rrsig(
-            rrset,
-            rrsig,
-            dnskey_rrset)
-        if valid:
-            print('OK: SIGNATURE VALID: RRSIG(%s,%s) with DNSKEY(%d,%s)' %
-                    (rrsig.type_covered,
-                    rrsig.algorithm,
-                    dnskey_signed_rrsig.keytag,
-                    dnskey_signed_rrsig.algorithm))
-        else:
-            print('NOK: SIGNATURE INVALID: RRSIG(%s,%s) with DNSKEY(%d,%s)' %
-                    (rrsig.type_covered,
-                    rrsig.algorithm,
-                    dnskey_signed_rrsig.keytag,
-                    dnskey_signed_rrsig.algorithm))
-            sys.exit(1)
-
-
-        if rrsig.type_covered == 'DNSKEY':
-
-            # checking the dnskey signed RRSIG is same as the one
-            # having the digest in DS
-            dprint(ds_rrset)
-            def sorting_lambda(keytag):
-                return lambda x: x.keytag == keytag
-            selected_ds_list = list(
-                filter(
-                    sorting_lambda(dnskey_signed_rrsig.keytag),
-                    ds_rrset))
-            if len(selected_ds_list) == 0:
-                print('WARNING: no DS for DNSKEY with keytag: %d' %
-                        dnskey_signed_rrsig.keytag)
-                # still not sure what to do here
-                # is it possible there are >1 dnskey.rrsig
-                # and one has no related ds record, other has
-                sys.exit(1)
-            if len(selected_ds_list) > 1:
-                error('multiple DS with keytag: %d' %
-                        dnskey_signed_rrsig.keytag)
-
-            ds = selected_ds_list[0]
-
-            valid = validate_dnskey(dnskey_signed_rrsig,
-                                    ds)
-            if valid:
-                print('OK: DIGEST VALID: DNSKEY(%d,%s) with DS(%s)' % (
-                    ds.keytag,
-                    ds.algorithm,
-                    ds.digest_type))
-            else:
-                print('NOK: DIGEST INVALID: DNSKEY(%d,%s) with DS (%s)' % (
-                    ds.keytag,
-                    ds.algorithm,
-                    ds.digest_type))
-                sys.exit(1)
+    rrsig = corresponding_rrsig_rrset[0].l2()
+    validate(rrset, rrsig, dnskey_or_ds_rrset)

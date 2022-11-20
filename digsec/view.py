@@ -3,9 +3,9 @@
 """
 handles validate command
 """
-from digsec import dprint, error, ensure_file_exists
+from digsec import dprint
 from digsec.help import display_help_view
-from digsec.utils import parse_flags
+from digsec.utils import parse_flags, ensure_file_exists
 from digsec.answer import print_answer_file
 
 
@@ -16,7 +16,7 @@ def do_view(argv):
     non_plus = list(filter(lambda x: x[0] != '+', argv))
     dprint(non_plus)
     if len(non_plus) != 1:
-        error('Missing arguments, see usage')
+        raise DigsecError('Missing arguments, see usage')
     else:
         an_rrset_filename = non_plus[0]
         ensure_file_exists(an_rrset_filename)

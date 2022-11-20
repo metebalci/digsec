@@ -4,9 +4,11 @@
 """
 various utility functions
 """
+from datetime import datetime
+import os
 import random
 import sys
-from digsec import dprint, error, DigsecError
+from digsec import dprint, DigsecError
 from digsec.constants import DNS_CLASS_TO_INT, DNS_TYPE_TO_INT
 from digsec.constants import DNS_CLASS_TO_STR, DNS_TYPE_TO_STR
 from digsec.constants import DNS_OPCODE_TO_INT, DNS_RCODE_TO_INT
@@ -201,16 +203,16 @@ def set_eq_flag(flags, s, flag_name, default, conv):
                 if default is not None:
                     flags[flag_name] = default
                 else:
-                    error(('Flag %s requires an ' +
-                           'explicit value after =') % flag_name)
+                    raise DigsecError('Flag %s requires an ' \
+                                      'explicit value after =' % flag_name)
             else:
-                error('Flag %s not expected here.' % flag_name)
+                raise DigsecError('Flag %s not expected here.' % flag_name)
         else:
             if flag_name in flags:
                 dprint('st: %s' % st[1])
                 flags[flag_name] = conv(st[1])
             else:
-                error('Flag %s not expected here.' % flag_name)
+                raise DigsecError('Flag %s not expected here.' % flag_name)
         return True
 
     return False
@@ -306,13 +308,24 @@ def parse_flags(argv, default_flags):
                         flags[f] = val
                         found = True
                         break
-                    error('Flag %s not expected here.' % flag)
+                    raise DigsecError('Flag %s not expected here.' % flag)
             if not found:
-                error('Flag %s unknown.' % flag)
+                raise DigsecError('Flag %s unknown.' % flag)
     return flags
 
 
-def get_dnskeys(dnskey_rrset, keytag, algorithm, name):
+# get matching DNS keys
+def get_dnskeys(dnskey_rrset, keytag, algorithm, name, sep, zsk):
+    """
+    Find the DNSKEY with keytag, algorithm, name
+
+    dnskey_rrset --
+    keytag --
+    algorithm --
+    name --
+    sep -- None, dont check, False/True check against
+    zsk -- None, dont check, False/True check against
+    """
 
     dnskeys = list(filter(lambda x: x.keytag == keytag,
                           dnskey_rrset))
@@ -337,13 +350,86 @@ def get_dnskeys(dnskey_rrset, keytag, algorithm, name):
                               algorithm,
                               name))
 
-    dnskeys = list(filter(lambda x: x.zone_key, dnskeys))
+    if sep is not None:
+        if sep:
+            dnskeys = list(filter(lambda x: x.sep, dnskeys))
+        else:
+            dnskeys = list(filter(lambda x: not x.sep, dnskeys))
+
+    if zsk is not None:
+        if zsk:
+            dnskeys = list(filter(lambda x: x.zone_key, dnskeys))
+        else:
+            dnskeys = list(filter(lambda x: not x.zone_key, dnskeys))
 
     if len(dnskeys) == 0:
-        raise DigsecError('DNSKEY with keytag: %s, algorithm: %d, ' \
-                          'name: %s is not a ZSK' % (
-                              keytag,
-                              algorithm,
-                              name))
+        raise DigsecError('No DNSKEYs with keytag: %s, algorithm: %d, ' \
+                          'name: %s, SEP: %s, ZSK: %s' % (keytag,
+                                                          algorithm,
+                                                          name,
+                                                          sep,
+                                                          zsk))
 
     return dnskeys
+
+
+def ensure_single_name_type_class_in_rrset(rrset):
+    an_rr = None
+    for rr in rrset:
+        if an_rr is None:
+            an_rr = rr
+        if rr.name != an_rr.name:
+            raise DigsecError('RRSET contains different names')
+        if rr.typ != an_rr.typ:
+            raise DigsecError('RRSET contains different types')
+        if rr.clas != an_rr.clas:
+            raise DigsecError('RRSET contains different classes')
+
+# RFC 4035: Section 5.3.1: Checking the RRSIG RR Validity
+# This method exactly follows the rules in above section of this RFC
+def check_rrsig_rr_validity(rrsig, rrset, zone, dnskey_rrset):
+    for rr in rrset:
+        if rrsig.name != rr.name:
+            raise DigsecError('RRSIG (%s) and RRSET (%s) have different ' \
+                              'owner name' % (rrsig.name,
+                                              rr.name))
+        if rrsig.clas != rr.clas:
+            raise DigsecError('RRSIG (%s) and RRSET (%s) have different ' \
+                              'class' % (rrsig.clas,
+                                         rr.clas))
+        if rrsig.signers_name != zone:
+            raise DigsecError('RRSIG signers name (%s) is different than ' \
+                              'the zone (%s)' % (rrsig.signers_name,
+                                                 zone))
+        if rrsig.type_covered != rr.typ:
+            raise DigsecError('RRSIG type covered (%s) is different than ' \
+                              'RRSET type (%s)' % (rrsig.type_covered,
+                                                   rrset.typ))
+        # . is counted as zero label, com is 1, metebalci.com is 2 etc.
+        # so len(split result) is +1
+        if len(rr.name.split('.')) < rrsig.labels:
+            raise DigsecError('# labels of RRSET name (%s) < ' \
+                              'RRSIG labels (%d)' % (rr.name.split('.'),
+                                                     rrsig.labels))
+    now = datetime.now()
+    if now > rrsig.signature_expiration:
+        raise DigsecError('RRSIG is not valid anymore ' \
+                          '(now > signature expiration)')
+    if now < rrsig.signature_inception:
+        raise DigsecError('RRSIG is not valid yet ' \
+                          '(now < signature inception)')
+    # this checks if there is a DNSKEY matching
+    # RRSIG's signers_name, algorithm, keytag and zone flag bit set
+    # this is also called in validate but this is for the sake of followint
+    # the same conditions in the RFC
+    get_dnskeys(dnskey_rrset,
+                rrsig.keytag,
+                rrsig.algorithm,
+                rrsig.signers_name,
+                None,
+                True)
+
+
+def ensure_file_exists(filename):
+    if not os.path.isfile(filename):
+        raise DigsecError('file does not exist: %s' % filename)

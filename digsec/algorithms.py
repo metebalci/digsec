@@ -14,10 +14,17 @@ from digsec import DigsecError
 
 
 def get_algorithm(algorithm_no):
-    algo = dnssec_algorithms.get(algorithm_no, None)
+    algo = __dnssec_algorithms.get(algorithm_no, None)
     if algo is None:
         raise DigsecError('algorithm: %d is not supported' % algorithm_no)
+    return algo
 
+
+def get_digest(digest_no):
+    digest = __dnssec_digests.get(digest_no, None)
+    if digest is None:
+        raise DigsecError('digest: %d is not supported' % digest_no)
+    return digest
 
 def hash_common(m, data, digest):
     m.update(data)
@@ -108,17 +115,17 @@ def ed448(data, signature, dnskey):
     return signer.verify(data, signature, pubkey)
 
 
-dnssec_algorithms = {}
-dnssec_algorithms['RSASHA1'] = rsasha1
-dnssec_algorithms['RSASHA256'] = rsasha256
-dnssec_algorithms['RSASHA512'] = rsasha512
-dnssec_algorithms['ECDSAP256SHA256'] = ecdsap256sha256
-dnssec_algorithms['ECDSAP384SHA256'] = ecdsap384sha384
-dnssec_algorithms['ED25519'] = ed25519
-dnssec_algorithms['ED448'] = ed448
+__dnssec_algorithms = {}
+__dnssec_algorithms['RSASHA1'] = rsasha1
+__dnssec_algorithms['RSASHA256'] = rsasha256
+__dnssec_algorithms['RSASHA512'] = rsasha512
+__dnssec_algorithms['ECDSAP256SHA256'] = ecdsap256sha256
+__dnssec_algorithms['ECDSAP384SHA256'] = ecdsap384sha384
+__dnssec_algorithms['ED25519'] = ed25519
+__dnssec_algorithms['ED448'] = ed448
 
 
-dnssec_digests = {}
-dnssec_digests['SHA-1'] = sha1
-dnssec_digests['SHA-256'] = sha256
-dnssec_digests['SHA-384'] = sha384
+__dnssec_digests = {}
+__dnssec_digests['SHA-1'] = sha1
+__dnssec_digests['SHA-256'] = sha256
+__dnssec_digests['SHA-384'] = sha384

@@ -8,6 +8,7 @@ import os
 import urllib.request
 import xml.dom.minidom
 import binascii
+from digsec import DigsecError
 from digsec.answer import save_section
 from digsec.utils import parse_flags, dprint
 from digsec.messages import L2_RR_DS
@@ -79,16 +80,24 @@ def do_download(argv):
     root_anchors_location = flags['root-anchors-location']
     is_remote = root_anchors_location.startswith('http')
     if is_remote:
-        with urllib.request.urlopen(root_anchors_location + '/root-anchors.xml') as r:
-            trust_anchors_xml = r.read()
+        try:
+            with urllib.request.urlopen(root_anchors_location + '/root-anchors.xml') as r:
+                trust_anchors_xml = r.read()
+        except:
+            raise DigsecError('cannot read ' \
+                              '%s/root-anchors.xml' % root_anchors_location)
     else:
         with open(root_anchors_location, 'rb') as r:
             trust_anchors_xml = r.read()
     trust_anchors = __read_trust_anchor(trust_anchors_xml.decode('utf-8'))
     if root_anchors_filename is not None:
         if is_remote:
-            with urllib.request.urlopen(root_anchors_location + "/root-anchors.p7s") as r:
-                trust_anchors_xml_signature = r.read()
+            try:
+                with urllib.request.urlopen(root_anchors_location + "/root-anchors.p7s") as r:
+                    trust_anchors_xml_signature = r.read()
+            except:
+                raise DigsecError('cannot read ' \
+                                  '%s/root-anchors.p7s' % root_anchors_location)
     print('Trust-Anchor contains keytags: %s' %
           ', '.join(map(lambda k: '%s-%s' % (k[0], k[1]),
                         trust_anchors)))

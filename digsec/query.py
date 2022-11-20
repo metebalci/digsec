@@ -7,7 +7,7 @@ handles query command
 import os
 from digsec.messages import DNSMessage, DNSHeader, DNSFlags
 from digsec.messages import DNSQuestionRR, DNSOptRR
-from digsec.utils import dprint, error, parse_flags
+from digsec.utils import dprint, parse_flags
 from digsec.utils import random_dns_message_id
 from digsec.utils import dns_type_to_int, dns_class_to_int
 from digsec.answer import save_section
@@ -69,7 +69,7 @@ def do_query(argv):
     dprint('at')
     dprint(at)
     if len(non_plus) == 0:
-        error('Missing arguments')
+        raise DigsecError('Missing arguments')
         display_help_query()
     elif len(non_plus) == 1:
         qname = non_plus[0]
@@ -84,7 +84,7 @@ def do_query(argv):
         qtype = non_plus[1]
         qclass = non_plus[2]
     else:
-        error('Too many arguments, see usage')
+        raise DigsecError('Too many arguments, see usage')
     # requests for root need empty qname
     if qname == '.':
         qname = ''
@@ -107,7 +107,7 @@ def do_query(argv):
     dprint(flags)
 
     if flags['do'] and (flags['udp_payload_size'] is None):
-        error('+do requires +udp_payload_size=<size>')
+        raise DigsecError('+do requires +udp_payload_size=<size>')
 
     save_answer = flags['save-answer']
     show_protocol = flags['show-protocol']
@@ -127,7 +127,8 @@ def do_query(argv):
             if not os.path.isabs(save_answer_dir):
                 save_answer_dir = os.path.join(os.getcwd(), save_answer_dir)
         if not os.path.exists(save_answer_dir):
-            error('save-answer-path: "%s" does not exist' % save_answer_dir)
+            raise DigsecError('save-answer-path: "%s" does not exist' %
+                              save_answer_dir)
     else:
         show_friendly = True
 
@@ -172,10 +173,15 @@ def do_query(argv):
 
     if show_protocol or show_friendly:
         print('<<< NETWORK COMMUNICATION >>>')
-        print('Server: %s:%s/%d' % (server, 'tcp' if flags['tcp'] else 'udp', port))
+        print('Server: %s:%s/%d' % (server,
+                                    'tcp' if flags['tcp'] else 'udp', port))
         print()
 
-    dns_response_packet = send_recv(dns_query_packet, server, port, flags['timeout'], flags['tcp'])
+    dns_response_packet = send_recv(dns_query_packet,
+                                    server,
+                                    port,
+                                    flags['timeout'],
+                                    flags['tcp'])
 
     if dns_response_packet is None:
         return
