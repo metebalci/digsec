@@ -6,11 +6,13 @@
 
 It is primarily a raw DNS tool, that does not implicitly add any DNS flags, or automatically perform multi-step operations like authenticating a DNSSEC record.
 
-Technically, `digsec` is similar to a validating, DNSSEC-aware resolver. However, it either does query (in other words lookup) or validate (in other words authenticate) at each run. With `query`, only a single DNS lookup is performed (e.g. lookup a DNSKEY record of a domain). With `validate`, only a single validation is performed (e.g. validate an A record with a DNSKEY record). Typically, for a DNSSEC validating query, `digsec` would have to be executed multiple times. `query` run naturally requires network communication, whereas `validate` run is off-line. To be able to run validation, the answers to queries can be saved to temporary files. This is what `digsec.resolve` and `digsec.authenticate` does, but they are not production quality, and only provided as an example.
+Technically, `digsec` is similar to a validating, DNSSEC-aware resolver. However, it either does query (in other words lookup) or validate (in other words authenticate) at each run. With `digsec query`, only a single DNS lookup is performed (e.g. lookup a DNSKEY record of a domain). With `digsec validate`, only a single validation is performed (e.g. validate an A record with a DNSKEY record). Typically, for a normal DNSSEC validating query, `digsec` would have to be executed multiple times. `digsec query` naturally requires network communication (with a DNS server), whereas `validate` runs off-line. To be able to run validation, the answers to queries can be saved to temporary files. 
+
+As an example, `digsec.resolve` and `digsec.authenticate` is provided to perform multi-step operations. `digsec.resolve` (iteratively) resolves and saves all responses to a query. `digsec.authenticate` validates a query by performing multiple validations using the saved responses. These tools are provided only as an example, not as production-quality utilities.
 
 DNSSEC Trust Anchors can be downloaded with `digsec`, and if required their validation can be done using openssl. `digsec.authenticate` does the validation using `openssl`.
 
-`digsec` is not supposed to be embedded into another code e.g. it is not a library. There is no proper error reporting (all errors are raised as exception and catched to give a single error message to user), and no proper return values. I do not plan to change this.
+`digsec` is not supposed to be embedded into another code e.g. it is not a library. There is no proper error reporting (all errors are raised as exception and catched to give a single error message to user), and no machine-friendly return values. I do not plan to change this.
 
 # Install
 
