@@ -18,13 +18,13 @@ from digsec.comm import send_recv
 
 # pylint: disable=too-many-arguments
 # decision of including OPT is by udp_payload_size, since it is a must in OPT
-def make_query_message(qname,
-                       qtype,
-                       qclass,
-                       rd,
-                       cd,
-                       udp_payload_size,
-                       dnssec_ok=False):
+def __make_query_message(qname,
+                         qtype,
+                         qclass,
+                         rd,
+                         cd,
+                         udp_payload_size,
+                         dnssec_ok=False):
     msgid = random_dns_message_id()
     qrr = DNSQuestionRR(qname,
                         dns_type_to_int(qtype),
@@ -56,6 +56,50 @@ def make_query_message(qname,
                              [],
                              [opt_rr] if opt_rr is not None else [])
     return dns_message
+
+
+def query(server, port, qname, qtype, qclass, flags):
+    """
+    Makes a DNS query
+
+    qname --
+    qtype --
+    qclass --
+    flags -- rd, cd, udp_payload_size, do used
+    """
+
+    dns_query_message = __make_query_message(qname,
+                                             qtype,
+                                             qclass,
+                                             flags['rd'],
+                                             flags['cd'],
+                                             flags['udp_payload_size'],
+                                             flags['do'])
+
+    dns_query_packet = dns_query_message.to_packet()
+
+    dprint('<<< NETWORK COMMUNICATION >>>')
+    dprint('Server: %s:%s/%d' % (server,
+                                 'tcp' if flags['tcp'] else 'udp', port))
+    dprint()
+
+    dns_response_packet = send_recv(dns_query_packet,
+                                    server,
+                                    port,
+                                    flags)
+
+    if dns_response_packet is None:
+        return (dns_query_message,
+                dns_query_packet,
+                None,
+                None)
+
+    dns_response_message = DNSMessage.from_packet(dns_response_packet)
+
+    return (dns_query_message,
+            dns_query_packet,
+            dns_response_packet,
+            dns_response_message)
 
 
 # pylint: disable=too-many-locals
@@ -145,26 +189,26 @@ def do_query(argv):
         port = 53
     dprint('server:port = %s:%d' % (server, port))
 
-    dns_query = make_query_message(qname,
+    (dns_query_message,
+     dns_query_packet,
+     dns_response_packet,
+     dns_response_message) = query(server,
+                                   port,
+                                   qname,
                                    qtype,
                                    qclass,
-                                   flags['rd'],
-                                   flags['cd'],
-                                   flags['udp_payload_size'],
-                                   flags['do'])
+                                   flags)
 
     if show_protocol:
         print('<<< Protocol Query >>>')
         print()
-        print(dns_query)
+        print(dns_query_message)
         print()
-
-    dns_query_packet = dns_query.to_packet()
 
     if show_friendly:
         print('<<< Friendly Query >>>')
         print()
-        print(dns_query.l2())
+        print(dns_query_message.l2())
         print()
 
     if save_packets:
@@ -180,8 +224,7 @@ def do_query(argv):
     dns_response_packet = send_recv(dns_query_packet,
                                     server,
                                     port,
-                                    flags['timeout'],
-                                    flags['tcp'])
+                                    flags)
 
     if dns_response_packet is None:
         return
@@ -198,6 +241,12 @@ def do_query(argv):
         print(dns_response_message)
         print()
 
+    if show_friendly:
+        print('<<< Friendly Response >>>')
+        print()
+        print(dns_response_message.l2())
+        print()
+
     if save_answer:
         filename_prefix = '%s%s.%s' % (save_answer_prefix,
                                        qname if len(qname) > 0 else '_root',
@@ -207,9 +256,3 @@ def do_query(argv):
         save_section(save_answer_dir,
                      filename_prefix,
                      dns_response_message.answer)
-
-    if show_friendly:
-        print('<<< Friendly Response >>>')
-        print()
-        print(dns_response_message.l2())
-        print()

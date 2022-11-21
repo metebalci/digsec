@@ -10,7 +10,9 @@ from digsec import dprint
 
 
 # send the raw dns req and return the raw response
-def send_recv(req, addr, port, timeout, tcp):
+def send_recv(req, addr, port, flags):
+    timeout = flags['timeout']
+    tcp = flags['tcp']
     dprint("----- START (%s) NETWORK COMMUNICATION -----" %
            ("TCP" if tcp else "UDP",))
     sendaddress = (addr, port)
