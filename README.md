@@ -123,6 +123,9 @@ Some pylint checks are disabled, either because I do not agree with them or beca
 
 # Release History
 
+0.9.1:
+  - 
+
 0.9: 
   - AAAA record type support
   - Ed25519 and Ed448 support
