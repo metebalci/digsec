@@ -68,7 +68,7 @@ These record types will be added: CNAME, NSEC3PARAM, PTR, SRV. (#35)
 
 ## DNSSEC Validation
 
-Positive authentication of record types above are suppored. 
+Positive authentication of record types above are supported. 
 
 Negative authentication is not supported yet, so NSEC and NSEC3 is not supported for validation, but it will be added. (#16 and #36)
 
@@ -87,7 +87,7 @@ These are supported:
 
 These are all algorithms that are required or recommended for DNSSEC validation per RFC 8624.
 
-There is no plan to support deprecated or vulnerable RSAMD5 (1), DSA (3), DSA-NSEC3-SHA1 (6) and optional ECC-GOST (12).
+There is no plan to support deprecated RSAMD5 (1), DSA (3), DSA-NSEC3-SHA1 (6) and optional ECC-GOST (12).
 
 As a result, algorithm support is considered complete.
 
