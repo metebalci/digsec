@@ -233,5 +233,5 @@ def do_validate(argv):
     rrset = list(map(lambda x: x.l2(), an_rrset))
     # this is already checked above, there is definitely one element
     rrsig = corresponding_rrsig_rrset[0].l2()
-    dnskey_or_ds_rrset = list(map(lambda x: x.l2(), an_rrset))
+    dnskey_or_ds_rrset = list(map(lambda x: x.l2(), dnskey_or_ds_rrset))
     validate(rrset, rrsig, dnskey_or_ds_rrset)
