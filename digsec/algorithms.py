@@ -23,7 +23,7 @@ def get_algorithm(algorithm_mnemonic):
 def get_digest(digest_mnemonic):
     digest = __dnssec_digests.get(digest_mnemonic, None)
     if digest is None:
-        raise DigsecError('digest: %d is not supported' % digest_no)
+        raise DigsecError('digest: %s is not supported' % digest_mnemonic)
     return digest
 
 def hash_common(m, data, digest):
