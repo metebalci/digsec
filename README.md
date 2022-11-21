@@ -18,11 +18,21 @@ DNSSEC Trust Anchors can be downloaded with `digsec`, and if required their vali
 
 `pip install digsec`
 
+This will install three command line scripts:
+
+- `digsec`: the main utility
+- `digsec.resolve`: example DNS query resolver
+- `digsec.authenticate`: example DNSSEC record validator
+
 # Usage
 
 Just run digsec to see options, flags and help, or much better see [my blog post](https://metebalci.com/blog/a-minimum-complete-tutorial-of-dnssec/) explaining how it is used with DNSSEC.
 
-As a simple example, you can try:
+`digsec` do not add DNS flags implicitly. You might need to use +rd (recursive desired) often. Also, if you are looking for invalid DNSSEC records, you probably need to use +cd (checking disabled) flag, otherwise the DNS server may not return these invalid records.
+
+When you try validation, you will need to save responses to files. It is the best to create a new temporary folder for this, as existing files might confuse you.
+
+For a complete resolve and authenticate example, you can try:
 
 ```
 $ digsec.resolve metebalci.com DNSKEY /tmp 1.1.1.1
@@ -33,20 +43,38 @@ $ digsec.authenticate metebalci.com DNSKEY /tmp
 
 `digsec.resolve` command above will query metebalci.com DNSKEY and all other required records for authenticating this record. All these DNS queries will be send to 1.1.1.1. It will save the responses to these queries under `/tmp`. Then `digsec.authenticate` command will try to authenticate metebalci.com DNSKEY using the save responses under `/tmp`. These commands should work without any error.
 
+# Error Reporting
+
+An error for `digsec` means the operation (query, validate, download etc.) cannot be completed for any reason. This can be a network problem, a file permission error, error in validation, error in any responses from DNS servers, a bug or a not-yet-supported DNS feature, and anything else.
+
 In case of any error, `digsec`:
 
-- returns a non-zero exit code
+- returns a non-zero exit code, but this is usually not visible to command line user
 - prints a message starting with `ERROR:` describing the error  
 
-`digsec.resolve` and `digsec.authenticate` follows a similar eror reporting but it is not extensively tested.
+An unexpected problem (e.g. file permissions) or a bug may cause an exception stack trace to be printed as output. It is helpful to provide this and how it happend (which command was run) as an issue.
 
-# Supported Records, Algorithms and Digests
+In a technical jargon, all handled error cases and exceptions are wrapped into DigsecError exception and this exception is catched at the main entry point and reported with `ERROR:` prompt. All other exceptions will be printed out.
+
+`digsec.resolve` and `digsec.authenticate` follows a similar eror reporting since they merely call `digsec` with various arguments.
+
+# DNSSEC Support Status
+
+## Record Types
 
 These record types are supported in query: SOA, NS, A, AAAA, MX, TXT, DNSKEY, RRSIG, DS, NSEC, NSEC3.
 
-Negative authentication is not supported yet, so NSEC and NSEC3 is not supported for validation, but it will be added.
+These record types will be added: CNAME, NSEC3PARAM, PTR, SRV. (#35)
 
-These algorithms are supported:
+## DNSSEC Validation
+
+Positive authentication of record types above are suppored. 
+
+Negative authentication is not supported yet, so NSEC and NSEC3 is not supported for validation, but it will be added. (#16 and #36)
+
+## Algorithms
+
+These are supported:
 
 - 5: RSASHA1
 - 7: RSASHA1-NSEC3-SHA1 (alias for 5)
@@ -61,7 +89,11 @@ These are all algorithms that are required or recommended for DNSSEC validation 
 
 There is no plan to support deprecated or vulnerable RSAMD5 (1), DSA (3), DSA-NSEC3-SHA1 (6) and optional ECC-GOST (12).
 
-These digests are supported: 
+As a result, algorithm support is considered complete.
+
+## Digests
+
+These are supported: 
 
 - 1: SHA1
 - 2: SHA256
@@ -69,11 +101,25 @@ These digests are supported:
 
 These are all digests that are required or recommended for DNSSEC validation per RFC 8624. 
 
-There is no plan to support optional GOST R 34.11.94 (3) digest.
+There is no plan to support optional GOST R 34.11.94 (3).
 
-# Hints
+As a result, digest support is considered complete.
 
-- digsec do not add DNS flags implicitly. You might need to use +rd (recursive desired) often. Also, if you are looking to invalid DNSSEC records, you might need to use +cd (checking disabled) flag, otherwise the DNS server may not return them.
+# Development
+
+`digsec` is a Python3 project. 
+
+I follow a single (master) branch for development. When I decide to make a release, I generate the [PyPI](https://pypi.org/project/digsec/) distribution package locally. There is no separate stable and development branches.
+
+[circleci](https://app.circleci.com/pipelines/github/metebalci/digsec) is used for continous integration, mainly to see if the current status of repo builds OK, tests OK and passes pylint.
+
+Some pylint checks are disabled, either because I do not agree with them or because I did not have time to fix the issues yet or do not plan to fix.
+
+## Dependencies
+
+- [rsa](https://pypi.org/project/rsa/): For RSA algorithms
+- [ecdsa](https://pypi.org/project/ecdsa/): For ECDSA algorithms
+- [ECpy](https://pypi.org/project/ECPy/): For ED algorithms (ED25519 and ED448)
 
 # Release History
 
