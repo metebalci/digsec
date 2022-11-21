@@ -47,6 +47,7 @@ Negative authentication is not supported yet, so NSEC and NSEC3 is not supported
 These algorithms are supported:
 
 - 5: RSASHA1
+- 7: RSASHA1-NSEC3-SHA1 (alias for 5)
 - 8: RSASHA256
 - 10: RSASHA512
 - 13: ECDSAP256SHA256
@@ -54,7 +55,9 @@ These algorithms are supported:
 - 15: ED25519
 - 16: ED448
 
-There is no plan to support: RSAMD5, DH, DSA, DSA-NSEC3-SHA1, RSASHA1-NSEC3-SHA1, ECC-GOST.
+These are all algorithms that are required or recommended for DNSSEC validation per RFC 8624.
+
+There is no plan to support deprecated or vulnerable RSAMD5 (1), DSA (3), DSA-NSEC3-SHA1 (6) and optional ECC-GOST (12).
 
 These digests are supported: 
 
@@ -62,7 +65,9 @@ These digests are supported:
 - 2: SHA256
 - 4: SHA384
 
-There is no plan to support GOST R 34.11.94.
+These are all digests that are required or recommended for DNSSEC validation per RFC 8624. 
+
+There is no plan to support optional GOST R 34.11.94 (3) digest.
 
 # Hints
 
@@ -79,7 +84,8 @@ There is no plan to support GOST R 34.11.94.
   - test resolve and authenticate methods resolve.py and authenticate.py,
     they can be called by digsec.resolve and digsec.authenticate
   - major changes in error handling and some code reorganization
-  - EDNS0, Extended DNS Errors (Code 15) handled explicitly
+  - EDNS0 opt reporing improved
+  - Extended DNS Errors (Code 15) support
 
 0.8.1:
   - digsec download outputs signature and CA file for trust anchor verification

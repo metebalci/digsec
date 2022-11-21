@@ -13,15 +13,15 @@ from ecpy.ecdsa import ECDSA
 from digsec import DigsecError
 
 
-def get_algorithm(algorithm_no):
-    algo = __dnssec_algorithms.get(algorithm_no, None)
+def get_algorithm(algorithm_mnemonic):
+    algo = __dnssec_algorithms.get(algorithm_mnemonic, None)
     if algo is None:
-        raise DigsecError('algorithm: %d is not supported' % algorithm_no)
+        raise DigsecError('algorithm: %s is not supported' % algorithm_mnemonic)
     return algo
 
 
-def get_digest(digest_no):
-    digest = __dnssec_digests.get(digest_no, None)
+def get_digest(digest_mnemonic):
+    digest = __dnssec_digests.get(digest_mnemonic, None)
     if digest is None:
         raise DigsecError('digest: %d is not supported' % digest_no)
     return digest
@@ -117,6 +117,7 @@ def ed448(data, signature, dnskey):
 
 __dnssec_algorithms = {}
 __dnssec_algorithms['RSASHA1'] = rsasha1
+__dnssec_algorithms['RSASHA1-NSEC3-SHA1'] = rsasha1
 __dnssec_algorithms['RSASHA256'] = rsasha256
 __dnssec_algorithms['RSASHA512'] = rsasha512
 __dnssec_algorithms['ECDSAP256SHA256'] = ecdsap256sha256
