@@ -24,9 +24,9 @@ def validate_rrsig(rrset,
     If rrset contains DNSKEY records, rrset equals to dnskey_rrset.
 
     Arguments:
-        rrset -- any rrset
-        rrsig -- RRSIG of rrset
-        dnskey_rrset -- DNSKEY rrset containing the ZSK
+        rrset -- list of L2 records of any type
+        rrsig -- L2 RRSIG record
+        dnskey_rrset -- list of L2 DNSKEY records containing the ZSK
 
     Returns:
         (True, dnskey) -- if rrsig can be validated with any dnskey
@@ -86,8 +86,8 @@ def validate_dnskey(dnskey, ds):
     Validate dnskey with ds.
 
     Arguments:
-        dnskey --
-        ds --
+        dnskey -- L2 DNSKEY record
+        ds -- L2 DS record
 
     Returns:
         True -- if ds contains a valid digest of dnskey
@@ -109,29 +109,36 @@ def validate_dnskey(dnskey, ds):
 def validate(rrset,
              rrsig,
              dnskey_or_ds_rrset):
+    """
+    Validates non-DNSKEY rrset with rrsig using DNSKEY rrset or
+              DNSKEY rrset with rrsig using DS rrset
+
+    rrset -- list of L2 records of any type
+    rrsig -- L2 RRSIG record
+    dnskey_or_ds_rrset -- list of DNSKEY or DS L2 records
+    """
 
     ensure_single_name_type_class_in_rrset(rrset)
+    ensure_single_name_type_class_in_rrset(dnskey_or_ds_rrset)
 
     if rrsig.type_covered == 'DNSKEY':
         ds_rrset = []
-        for ds_rr in dnskey_or_ds_rrset:
-            ds_rr = ds_rr.l2()
-            if ds_rr.typ != 'DS':
+        for rr in dnskey_or_ds_rrset:
+            if rr.typ != 'DS':
                 raise DigsecError('RRSIG covers DNSKEY, ' \
-                                  'but %s provided not DS' % ds_rr.typ)
-            ds_rrset.append(ds_rr)
+                                  'but %s provided not DS' % rr.typ)
+            ds_rrset.append(rr)
         # also set dnskey_rrset because it also going to be used
         # by first validate_rrsig just below
         dnskey_rrset = rrset
     else:
         dnskey_rrset = []
-        for dnskey_rr in dnskey_or_ds_rrset:
-            dnskey_rr = dnskey_rr.l2()
-            if dnskey_rr.typ != 'DNSKEY':
+        for rr in dnskey_or_ds_rrset:
+            if rr.typ != 'DNSKEY':
                 raise DigsecError('RRSIG covers %s, but %s provided ' \
                                   'not DNSKEY' % (rrsig.type_covered,
-                                                  ds_rr.typ))
-            dnskey_rrset.append(dnskey_rr)
+                                                  rr.typ))
+            dnskey_rrset.append(rr)
 
     # not sure about this
     zone = dnskey_rrset[0].name
@@ -180,6 +187,7 @@ def validate(rrset,
                           'FOR DNSKEY(%d,%s)' % (ds.keytag,
                                                  ds.algorithm))
 
+
 # pylint: disable=too-many-branches
 # pylint: disable=too-many-locals
 # pylint: disable=too-many-statements
@@ -223,5 +231,7 @@ def do_validate(argv):
         raise DigsecError('no DNSKEY or DS RR in the %s file' %
                           dnskey_or_ds_rrset_filename)
     rrset = list(map(lambda x: x.l2(), an_rrset))
+    # this is already checked above, there is definitely one element
     rrsig = corresponding_rrsig_rrset[0].l2()
+    dnskey_or_ds_rrset = list(map(lambda x: x.l2(), an_rrset))
     validate(rrset, rrsig, dnskey_or_ds_rrset)
