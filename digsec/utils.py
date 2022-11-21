@@ -129,7 +129,7 @@ def encode_name(name):
 
 
 def format_as_other(an_int):
-    return 'OTHER (%d)' % an_int
+    return 'OTHER(%d)' % an_int
 
 
 def dns_class_to_int(class_as_str):
@@ -137,7 +137,7 @@ def dns_class_to_int(class_as_str):
 
 
 def dns_class_to_str(class_as_int):
-    return DNS_CLASS_TO_STR[class_as_int]
+    return DNS_CLASS_TO_STR.get(class_as_int, 'CLASS%d' % class_as_int)
 
 
 def dns_type_to_int(type_as_str):
@@ -145,7 +145,7 @@ def dns_type_to_int(type_as_str):
 
 
 def dns_type_to_str(type_as_int):
-    return DNS_TYPE_TO_STR.get(type_as_int, format_as_other(type_as_int))
+    return DNS_TYPE_TO_STR.get(type_as_int, 'TYPE%d' % type_as_int)
 
 
 def dns_opcode_to_int(opcode_as_str):
