@@ -20,6 +20,7 @@ from digsec.utils import dnssec_algorithm_to_int, dnssec_algorithm_to_str
 from digsec.utils import dnssec_digest_type_to_int, dnssec_digest_type_to_str
 from digsec.utils import decode_name, encode_name, calculate_keytag
 from digsec.utils import dnssec_nsec3_algorithm_to_str
+from digsec.constants import EDNS0_OPT_CODES_TO_STR, EDNS_ERR_CODES_TO_STR
 
 # Some explanation on how this module works
 #
@@ -617,11 +618,21 @@ class L2_EDNS(namedtuple('L2_EDNS', ['udp_payload_size',
         opts.append('\tDNSSEC OK (DO): %s' % self.dnssec_ok)
         opts.append('\tOptions: ')
         for opt in self.options:
-            if opt[0] == 15:
-                opts.append('\t\t%d: %s' % (opt[0],
-                                            opt[1][2:].decode('ascii')))
-            else:
-                opts.append('\t\t%s' % opt)
+            option_code = opt[0]
+            option_code_str = EDNS0_OPT_CODES_TO_STR.get(option_code,
+                                                         None)
+            option_data = opt[1]
+            opts.append('\t\t%d (%s)' % (option_code,
+                                         option_code_str))
+            # option_code=15
+            # Extended DNS Errors (RFC 8914)
+            if option_code == 15:
+                info_code, = unpack('! H', option_data[0:2])
+                extra_text = option_data[2:].decode('ascii')
+                opts[-1] = ('%s: %d (%s) "%s"' % (opts[-1],
+                                               info_code,
+                                               EDNS_ERR_CODES_TO_STR.get(info_code, ''),
+                                               extra_text))
         return '\n'.join(opts)
 
 
