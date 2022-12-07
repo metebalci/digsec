@@ -135,6 +135,8 @@ def do_query(argv):
     # ignore last dot
     if qname.endswith('.'):
         qname = qname[:-1]
+    if not qname.isascii():
+        qname = qname.encode("idna").decode()
     default_flags = {'rd': False,
                      'cd': False,
                      'do': False,
